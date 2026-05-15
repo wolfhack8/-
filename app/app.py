@@ -1,133 +1,158 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional, Dict
+from datetime import datetime
 
-app = FastAPI(
-    title="Masar AI Platform - Computer Science Edition",
-    description="Learning analytics and adaptive education API for the Masar platform.",
-    version="1.0.0",
-)
+app = FastAPI(title="مسار - Masar AI Platform")
 
-# --- النماذج (Data Models) ---
-
+# --- النماذج (Models) ---
 class User(BaseModel):
     id: int
     name: str
-    role: str  # "Faculty" or "Student"
-    specialization: str = "Computer Science"
+    role: str # "Faculty" or "Student"
+    specialization: str
+    faculty_id: Optional[int] = None # لربط الطالب بعضو هيئة التدريس
 
 class Course(BaseModel):
     id: int
     title: str
     code: str
-    description: str
+    specialization: str
+    syllabus_attached: bool = False
 
-class AssessmentResult(BaseModel):
+class GradeRecord(BaseModel):
     student_id: int
     course_code: str
-    score: float # من 100
-    skills_mastered: List[str]
-    weak_areas: List[str]
+    grade: float
+    faculty_id: int
 
-# --- قاعدة بيانات وهمية (In-memory DB) ---
-db_users: List[User] = []
-db_courses: List[Course] = [
-    Course(id=1, title="Computer Networking", code="CS301", description="Focus: Network Layer, IPv4/IPv6, Routing protocols"),
-    Course(id=2, title="Mathematical Optimization", code="CS302", description="Focus: Linear Programming, Duality, Primal problems")
+class QuizAnswers(BaseModel):
+    student_id: int
+    test_number: int # 1, 2, or 3
+    answers: Dict[str, str] # {"q1": "a", "q2": "c"...}
+
+# --- قواعد البيانات الوهمية ---
+db_users = [
+    User(id=1, name="د. أحمد (شبكات)", role="Faculty", specialization="هندسة حاسب"),
+    User(id=2, name="د. سارة (بحوث)", role="Faculty", specialization="علوم حاسب"),
+    # ربطنا الطلاب بأعضاء التدريس (5 لكل عضو كحد أقصى نظرياً)
+    User(id=101, name="سفيان الخلفي", role="Student", specialization="علوم حاسب", faculty_id=2),
+    User(id=102, name="لينا القحطاني", role="Student", specialization="هندسة حاسب", faculty_id=1),
 ]
-db_results: List[AssessmentResult] = []
 
-# --- منطق الذكاء الاصطناعي (AI Analysis Logic) ---
+db_courses = [
+    Course(id=1, title="شبكات الحاسب", code="CS301", specialization="هندسة حاسب"),
+    Course(id=2, title="بحوث العمليات", code="CS302", specialization="علوم حاسب")
+]
 
-def generate_ai_analysis(student_id: int):
-    student_results = [r for r in db_results if r.student_id == student_id]
-    if not student_results:
-        return {
-            "student_id": student_id,
-            "status": "No data",
-            "analysis": "لا توجد نتائج اختبارات لتحليلها بعد.",
-        }
-    
-    avg_score = sum(r.score for r in student_results) / len(student_results)
-    
-    # محاكاة التنبؤ بالتعثر الدراسي (Predictive Risk)
-    risk_level = "Low"
-    if avg_score < 60:
-        risk_level = "High"
-    elif avg_score < 75:
-        risk_level = "Medium"
-    
-    analysis_text = f"بناءً على أداء الطالب، مستوى الاستيعاب العام هو {avg_score}%. "
-    if risk_level == "High":
-        analysis_text += "توصية: يحتاج الطالب إلى خطة علاجية فورية في المفاهيم الأساسية."
-    else:
-        analysis_text += "توصية: الطالب يسير في المسار الصحيح، يُنصح بزيادة التحديات البرمجية."
+db_grades = []
+db_student_progress = {101: {"tests_completed": 0, "skills": []}, 102: {"tests_completed": 0, "skills": []}}
 
+# --- الأسئلة المستخرجة من المراجع ---
+QUIZ_BANK = {
+    "Networks": [
+        {"id": "n1", "q": "ما هي وظيفة الـ Forwarding في الشبكات؟", "options": {"a": "تحديد المسار (Routing)", "b": "نقل الحزم من مدخل الموجه إلى المخرج المناسب", "c": "التحكم في الازدحام"}, "answer": "b", "skill": "Data Plane Understanding"},
+        {"id": "n2", "q": "في الإصدار IPv6، أي بروتوكول يستخدم لإدارة مجموعات Multicast؟", "options": {"a": "ICMPv4", "b": "IGMP", "c": "ICMPv6"}, "answer": "c", "skill": "IPv6 Features"},
+        {"id": "n3", "q": "ما هي آلية Tunneling لربط IPv4 مع IPv6؟", "options": {"a": "تغليف حزم IPv6 كبيانات داخل حزم IPv4", "b": "حذف حزم IPv4", "c": "تغيير العناوين فيزيائياً"}, "answer": "a", "skill": "Transition Mechanisms"},
+        {"id": "n4", "q": "ما هو دور الـ Control Plane؟", "options": {"a": "محلي لكل موجه", "b": "منطق الشبكة لتحديد مسار الحزمة من المصدر للوجهة", "c": "فحص الـ Checksum"}, "answer": "b", "skill": "Control Plane"},
+        {"id": "n5", "q": "ما هو التغيير في الـ Checksum في IPv6؟", "options": {"a": "تمت إزالته بالكامل لتسريع المعالجة", "b": "تمت مضاعفة حجمه", "c": "أصبح يعتمد على الـ TCP فقط"}, "answer": "a", "skill": "IPv6 Header"}
+    ],
+    "OperationsResearch": [
+        {"id": "or1", "q": "عند تحويل مسألة Primal بصيغة (Max) إلى Dual، ما هي صيغة دالة الهدف الجديدة؟", "options": {"a": "Max", "b": "Min", "c": "تظل كما هي"}, "answer": "b", "skill": "Duality Principle"},
+        {"id": "or2", "q": "ماذا يمثل $Z_D$ في مسألة الـ Dual؟", "options": {"a": "المتغيرات الأولية", "b": "القيود التقنية", "c": "قيمة دالة الهدف المقابلة (المصغرة)"}, "answer": "c", "skill": "Objective Functions"},
+        {"id": "or3", "q": "إذا كان القيد في مسألة الـ Primal يحتوي على $\\le$ ، فما هي طبيعة المتغير المقابل في الـ Dual؟", "options": {"a": "$\\omega_i \\ge 0$", "b": "$\\omega_i \\le 0$", "c": "غير مقيد"}, "answer": "a", "skill": "Constraints Mapping"},
+        {"id": "or4", "q": "بناءً على المرجع المرفق، ثوابت الطرف الأيمن (b) في الـ Primal تصبح في الـ Dual:", "options": {"a": "معاملات المتغيرات التقنية", "b": "معاملات دالة الهدف (Objective Coefficients)", "c": "تختفي من المعادلة"}, "answer": "b", "skill": "Mathematical Modeling"},
+        {"id": "or5", "q": "كم عدد المتغيرات في مسألة الـ Dual إذا كانت مسألة الـ Primal تحتوي على $m$ من القيود؟", "options": {"a": "$n$ متغيرات", "b": "$m$ متغيرات", "c": "$m+n$ متغيرات"}, "answer": "b", "skill": "Dimensionality Analysis"}
+    ]
+}
+
+# --- مسارات API الرئيسية ---
+
+@app.post("/faculty/upload-syllabus")
+def upload_syllabus(course_code: str, faculty_id: int):
+    # محاكاة إرفاق المنهج المعتمد ليعتمد عليه الـ API
+    for course in db_courses:
+        if course.code == course_code:
+            course.syllabus_attached = True
+            return {"message": f"تم إرفاق المنهج المعتمد لمقرر {course.title} بنجاح. سيقوم الـ API الآن بالاعتماد عليه في التقييم."}
+    raise HTTPException(status_code=404, detail="Course not found")
+
+@app.post("/faculty/record-grade")
+def record_grade(record: GradeRecord):
+    # رصد الدرجات
+    db_grades.append(record)
+    return {"message": "تم رصد الدرجة بنجاح."}
+
+@app.get("/faculty/my-students/{faculty_id}")
+def get_my_students(faculty_id: int):
+    # إرجاع الطلاب المرتبطين بعضو هيئة التدريس المخصص وتخصصهم
+    students = [s for s in db_users if s.role == "Student" and s.faculty_id == faculty_id]
+    return {"students": students}
+
+@app.post("/student/submit-quiz")
+def submit_quiz(submission: QuizAnswers):
+    student_id = submission.student_id
+    if student_id not in db_student_progress:
+        db_student_progress[student_id] = {"tests_completed": 0, "skills": []}
+    
+    # محاكاة تصحيح وتحليل الـ API
+    correct_count = 0
+    weaknesses = []
+    new_skills = []
+    
+    # دمج أسئلة الشبكات والبحوث للبحث عن الإجابة الصحيحة
+    all_qs = QUIZ_BANK["Networks"] + QUIZ_BANK["OperationsResearch"]
+    
+    for q_id, user_ans in submission.answers.items():
+        q_obj = next((q for q in all_qs if q["id"] == q_id), None)
+        if q_obj:
+            if q_obj["answer"] == user_ans:
+                correct_count += 1
+                new_skills.append(q_obj["skill"])
+            else:
+                weaknesses.append(f"ضعف في: {q_obj['skill']}")
+    
+    # تحديث نسبة الإنجاز والمهارات
+    db_student_progress[student_id]["tests_completed"] += 1
+    db_student_progress[student_id]["skills"].extend(new_skills)
+    
+    # كل اختبار يمثل 33% من الإنجاز (بما أنهم 3 اختبارات)
+    completion_rate = min(100, db_student_progress[student_id]["tests_completed"] * 33)
+    
     return {
-        "student_id": student_id,
-        "average_score": avg_score,
-        "risk_level": risk_level,
-        "ai_recommendation": analysis_text
+        "score": correct_count,
+        "total": 10,
+        "completion_rate": completion_rate,
+        "acquired_skills": list(set(db_student_progress[student_id]["skills"])),
+        "weaknesses": weaknesses,
+        "ai_analysis": "بناءً على المرجع المرفق، تم تحديد نقاط قوتك وضعفك بنجاح."
     }
 
-def require_faculty(user_role: str):
-    if user_role.casefold() != "faculty":
-        raise HTTPException(status_code=403, detail="عذراً، هذه الصلاحية مخصصة لأعضاء هيئة التدريس فقط.")
-
-# --- المسارات (Routes) ---
-
-@app.get("/")
-def home():
-    return {
-        "message": "Welcome to Masar AI Platform",
-        "status": "Online",
-        "docs": "/docs",
-        "health": "/healthz",
+# --- محرك البوت الإرشادي ---
+@app.post("/chatbot/ask")
+def chatbot_ask(question: str = Body(..., embed=True)):
+    q = question.strip()
+    responses = {
+        "أين يمكن ان اجد اختباري؟": "يمكنك إيجاد اختباراتك (الشبكات والبحوث) في قسم 'الاختبارات الذكية' في اللوحة الجانبية.",
+        "أين اجد تحليلي؟": "يظهر تحليلك الذكي تلقائياً بعد تسليم أي اختبار في بطاقة 'التحليل الاستباقي'.",
+        "كيف ارى مهاراتي المكتسبة؟": "يتم عرض مهاراتك المكتسبة في قسم 'ملفي الشخصي' وتحت نتيجتك بعد كل اختبار.",
+        "كم هي نسبة انجازي في شبكات؟": "نسبة إنجازك تزيد بمقدار 33.3% بعد كل اختبار من الاختبارات الثلاثة المقررة.",
+        "كيف اتابع درجات طلابي؟": "من خلال حسابك كعضو هيئة تدريس، اذهب لتبويب 'متابعة الطلاب'. ستجد مجموعتك (حتى 5 طلاب).",
+        "كيف أرصد درجات طلابي؟": "يمكنك استخدام قسم 'رصد الدرجات' المخصص لأعضاء هيئة التدريس وتحديد اسم الطالب والمقرر.",
+        "كيف أضيف مقرر؟": "من خلال صلاحيات عضو هيئة التدريس، يمكنك إرفاق المنهج وإضافة المقرر لربطه بتخصصك.",
+        "كم طالب يوجد لدي؟": "بناءً على التوزيع الحالي، يتم إسناد مجموعة من 5 طلاب كحد أقصى لكل عضو هيئة تدريس لمتابعتهم بدقة.",
+        "كيف اسجل دخول؟": "المنصة تدعم الدخول الموحد، أدخل رقمك الجامعي أو الوظيفي ليتم توجيهك للوحة المخصصة لك.",
+        "هل لايزال هناك اختبار لم أختبره؟": "النظام يوفر 3 اختبارات متتالية. تحقق من نسبة إنجازك؛ إذا كانت أقل من 100%، فهناك اختبار متبقي.",
+        "ماهو IPv4?": "هو الإصدار الرابع من بروتوكول الإنترنت، ويستخدم عناوين بطول 32 بت، وهو الأكثر شيوعاً حتى الآن.",
+        "ماهو IPv6?": "هو الإصدار السادس والمطور، يستخدم عناوين بطول 128 بت، وأزال خاصية Checksum لتسريع المعالجة عبر الـ Routers.",
+        "ماهي Network?": "الشبكة في سياق مسارك الأكاديمي تركز على طبقة الشبكة (Network Layer) وعمليات الـ Forwarding و Routing.",
+        "ماهي البحوث؟": "مقرر بحوث العمليات (Operations Research) يركز على البرمجة الخطية، تقليل التكلفة، ومبدأ Duality.",
+        "ماهو Dule?": "الـ Duality (المشكلة المقابلة) هو مفهوم رياضي يحول مسألة Primal (مثل تعظيم الربح) إلى مسألة Dual (تصغير التكلفة $Z_D$) للحصول على نفس الحل الأمثل."
     }
-
-@app.get("/healthz", include_in_schema=False)
-def healthz():
-    return {"status": "ok"}
-
-# 1. عضو هيئة التدريس: إضافة مقرر
-@app.post("/faculty/add-course")
-def add_course(course: Course, user_role: str):
-    require_faculty(user_role)
-    db_courses.append(course)
-    return {"message": f"تم إضافة مقرر {course.title} بنجاح."}
-
-# 2. عضو هيئة التدريس: إضافة طالب ورصد درجة (كمرجع للاختبار)
-@app.post("/faculty/record-result")
-def record_student_result(result: AssessmentResult, user_role: str):
-    require_faculty(user_role)
-    db_results.append(result)
-    return {"message": "تم رصد النتيجة وتحديث قاعدة بيانات التحليل."}
-
-# 3. الطالب: الاطلاع على التحليل الخاص به
-@app.get("/student/my-analysis/{student_id}")
-def get_student_analysis(student_id: int):
-    analysis = generate_ai_analysis(student_id)
-    return analysis
-
-# 4. عضو هيئة التدريس: الاطلاع على تحليل جميع الطلاب
-@app.get("/faculty/all-students-analysis")
-def get_all_analysis(user_role: str):
-    require_faculty(user_role)
     
-    all_analysis = []
-    # جلب معرفات الطلاب الفريدة
-    student_ids = sorted(set(r.student_id for r in db_results))
-    for s_id in student_ids:
-        all_analysis.append(generate_ai_analysis(s_id))
+    # البحث عن إجابة مناسبة
+    for key, val in responses.items():
+        if key in q or q in key:
+            return {"answer": val}
     
-    return {"total_students_analyzed": len(student_ids), "reports": all_analysis}
-
-# 5. عرض المقررات المرجعية (علوم الحاسب)
-@app.get("/courses/reference")
-def get_reference_courses():
-    return db_courses
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run("app.app:app", host="0.0.0.0", port=8000, reload=True)
+    return {"answer": "عذراً، لم أفهم سؤالك. يرجى اختيار أحد الأسئلة المبرمجة مسبقاً في الدليل الإرشادي."}
