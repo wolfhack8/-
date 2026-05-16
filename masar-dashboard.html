@@ -5,842 +5,814 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>منصة مسار الذكية | Masar AI Platform</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
-  <style>
-    body { font-family: 'Tajawal', sans-serif; background-color: #f8fafc; scroll-behavior: smooth; }
-    .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); }
-    .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); }
-    .pulse-bot { animation: pulse 2s infinite; }
-    @keyframes pulse {
-      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30, 125, 224, 0.7); }
-      70% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(30, 125, 224, 0); }
-      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30, 125, 224, 0); }
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { tajawal: ['Tajawal', 'sans-serif'] },
+          colors: {
+            navy: { 950:'#050e1f', 900:'#0A1628', 800:'#0f2040', 700:'#162d5a', 600:'#1e3f7a' },
+            brand: { 400:'#3b96f5', 500:'#1e7de0', 600:'#155fba' },
+            gold: { 400:'#fbbf24', 500:'#f59e0b', 600:'#d97706' },
+            emerald2: { 400:'#34d399', 500:'#10b981', 600:'#059669' }
+          }
+        }
+      }
     }
+  </script>
+  <style>
+    body { font-family: 'Tajawal', sans-serif; background-color: #f8fafc; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
   </style>
 </head>
-<body class="text-slate-800 antialiased">
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
-  <div id="login-gate" class="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900">
-    <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-3xl shadow-2xl border border-slate-100">
-      <div class="text-center">
-        <div class="inline-flex p-3 bg-blue-50 text-blue-600 rounded-2xl mb-3 font-black text-2xl tracking-wider">🎯 مَـسـار</div>
-        <h2 class="text-3xl font-extrabold text-slate-900">منصة التعليم الذكي والتكيفي</h2>
-        <p class="mt-2 text-sm text-slate-500">سد الفجوة المهارية الأكاديمية والمهنية بالذكاء الاصطناعي</p>
+  <div id="auth-screen" class="flex-1 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-navy-900 via-navy-800 to-slate-900">
+    <div class="bg-white/95 backdrop-blur-md p-6 sm:p-10 rounded-3xl shadow-2xl w-full max-w-lg border border-white/20">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-500 text-white font-black text-3xl mb-4 shadow-lg shadow-brand-500/30">م</div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-navy-900 tracking-tight">منصة مَسار التعليمية</h1>
+        <p class="text-slate-500 mt-2 text-sm sm:text-base">بوابة التقييم الذكي وسد الفجوات المهارية بالذكاء الاصطناعي</p>
       </div>
-      <form class="mt-8 space-y-5" onsubmit="handleLogin(event)">
+
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-5">
         <div>
-          <label class="block text-sm font-bold text-slate-700 mb-1">نوع الحساب</label>
-          <select id="login-role" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" onchange="toggleSpecializationField()">
-            <option value="student">طالب (Student)</option>
-            <option value="faculty">عضو هيئة تدريس (Faculty)</option>
+          <label class="block text-sm font-bold text-slate-700 mb-2">نوع الحساب / الصلاحية</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" onclick="setRole('student')" id="btn-role-student" class="py-3 px-4 rounded-xl border-2 transition-all font-bold flex items-center justify-center gap-2 border-brand-500 bg-brand-50 text-brand-600">
+              👤 طالب
+            </button>
+            <button type="button" onclick="setRole('faculty')" id="btn-role-faculty" class="py-3 px-4 rounded-xl border-2 transition-all font-bold flex items-center justify-center gap-2 border-slate-200 text-slate-600 hover:bg-slate-50">
+              👨‍🏫 عضو تدريس
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label for="user-id" id="lbl-user-id" class="block text-sm font-bold text-slate-700 mb-1">الرقم الجامعي</label>
+          <input type="text" id="user-id" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 font-mono transition-all" placeholder="أدخل الرقم الخاص بك..." />
+          <p class="text-xs text-slate-400 mt-1">💡 إدخال رقم مستخدم سابق سيقوم باستعادة بياناته المحفوظة فوراً.</p>
+        </div>
+
+        <div>
+          <label for="user-name" class="block text-sm font-bold text-slate-700 mb-1">الاسم الكامل</label>
+          <input type="text" id="user-name" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 transition-all" placeholder="الاسم ثلاثي..." />
+        </div>
+
+        <div>
+          <label for="user-spec" class="block text-sm font-bold text-slate-700 mb-1">التخصص الأكاديمي</label>
+          <select id="user-spec" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white text-slate-900 font-medium transition-all">
+            <option value="علوم حاسب">علوم الحاسب الآلي (CS)</option>
+            <option value="هندسة حاسب">هندسة الحاسب (CE)</option>
+            <option value="نظم معلومات">نظم المعلومات (IS)</option>
           </select>
         </div>
-        <div>
-          <label class="block text-sm font-bold text-slate-700 mb-1">الرقم الأكاديمي / الوظيفي</label>
-          <input id="login-id" type="text" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="أدخل رقمك المميز هنا..." />
-        </div>
-        <div>
-          <label class="block text-sm font-bold text-slate-700 mb-1">الاسم الكامل</label>
-          <input id="login-name" type="text" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="اكتب اسمك الثلاثي..." />
-        </div>
-        <div>
-          <label class="block text-sm font-bold text-slate-700 mb-1">التخصص الأكاديمي</label>
-          <select id="login-specialization" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
-            <option value="علوم حاسب">علوم الحاسب الآلي</option>
-            <option value="هندسة حاسب">هندسة الحاسب</option>
-            <option value="نظم معلومات">نظم المعلومات</option>
-          </select>
-        </div>
-        <button type="submit" class="w-full py-3.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:from-blue-700 hover:to-indigo-700 transition transform active:scale-95">
-          دخول المنصة الآمن
+
+        <button type="submit" class="w-full py-3.5 bg-brand-500 hover:bg-brand-600 active:transform active:scale-95 text-white font-bold rounded-xl shadow-lg shadow-brand-500/20 transition-all flex items-center justify-center gap-2 text-base">
+          تسجيل الدخول للمنصة 🚀
         </button>
       </form>
     </div>
   </div>
 
-  <div id="main-platform" class="hidden min-h-screen flex flex-col">
-    <header class="glass sticky top-0 z-40 border-b border-slate-200/80 shadow-sm">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <span class="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">مَسار AI</span>
-          <span id="user-badge" class="px-2.5 py-1 bg-slate-100 text-slate-600 font-bold text-xs rounded-lg border border-slate-200"></span>
+  <div id="app-screen" class="hidden flex-1 flex flex-col">
+    <header class="bg-navy-900 text-white shadow-md sticky top-0 z-40 px-4 sm:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center font-black text-xl text-white shadow-md">م</div>
+        <div>
+          <h2 class="font-extrabold text-lg tracking-tight">مسار الذكي <span class="text-brand-400 text-xs px-2 py-0.5 bg-white/10 rounded-full font-normal">v2.5</span></h2>
+          <p id="nav-spec-badge" class="text-xs text-slate-400 font-medium mt-0.5">تخصص: علوم حاسب</p>
         </div>
-        <div class="flex items-center gap-4">
-          <div class="text-left md:text-right hidden sm:block">
-            <p id="nav-user-name" class="font-bold text-slate-900 text-sm leading-tight"></p>
-            <p id="nav-user-meta" class="text-xs text-slate-400"></p>
-          </div>
-          <button onclick="handleLogout()" class="px-4 py-2 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition border border-red-200/50">
-            تسجيل الخروج
-          </button>
+      </div>
+      
+      <div class="flex items-center gap-4">
+        <div class="text-right hidden sm:block">
+          <p id="nav-user-name" class="font-bold text-sm text-white">مرحباً، الاسم</p>
+          <p id="nav-user-role" class="text-xs text-brand-400 font-medium">الحساب: طالب</p>
         </div>
+        <button onclick="handleLogout()" class="px-4 py-2 text-xs font-bold bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white rounded-xl transition-all border border-rose-500/20">
+          تسجيل الخروج ↩
+        </button>
       </div>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto">
       
-      <div id="student-view" class="hidden space-y-8">
-        <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold mb-1">مرحباً بك مجدداً في مسارك التعليمي الذكي 👋</h1>
-            <p class="text-blue-100 text-sm sm:text-base">يقوم الذكاء الاصطناعي الآن بتحليل أدائك الموقفي وبناء خطة علاجية مخصصة لسد فجواتك المهارية.</p>
-          </div>
-          <div class="bg-white/10 backdrop-blur px-5 py-3 rounded-2xl border border-white/10 text-center shrink-0">
-            <p class="text-xs text-blue-200 font-medium">مستواك الحالي المقدر</p>
-            <p id="student-level-lbl" class="text-xl font-black tracking-wide text-amber-300">مبتدئ</p>
-          </div>
+      <div id="student-workspace" class="hidden space-y-8">
+        
+        <div class="flex flex-wrap gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+          <button onclick="switchStudentTab('courses')" id="tab-courses" class="flex-1 py-2 px-4 rounded-xl bg-brand-50 text-brand-600 font-bold text-sm transition-all">📚 مقرراتي واختباراتي</button>
+          <button onclick="switchStudentTab('analysis')" id="tab-analysis" class="flex-1 py-2 px-4 rounded-xl text-slate-500 hover:bg-slate-50 font-bold text-sm transition-all">📊 تحليل أدائي ومستواي</button>
+          <button onclick="switchStudentTab('explanations')" id="tab-explanations" class="flex-1 py-2 px-4 rounded-xl text-slate-500 hover:bg-slate-50 font-bold text-sm transition-all">💡 قسم الشروحات والتحسين</button>
         </div>
 
-        <div>
-          <h2 class="text-xl font-extrabold text-slate-900 mb-4 flex items-center gap-2">
-            <span>📚 المقررات الدراسية واختبارات قياس الكفاءة الموقفية</span>
-          </h2>
-          <div id="student-courses-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            </div>
+        <div class="bg-gradient-to-r from-brand-600 to-navy-700 p-6 sm:p-8 rounded-3xl text-white shadow-xl relative overflow-hidden">
+          <div class="relative z-10 max-w-2xl">
+            <span class="px-3 py-1 bg-white/10 rounded-full text-xs font-bold uppercase tracking-wider text-brand-200">لوحة المتابعة الأكاديمية</span>
+            <h2 id="student-welcome-title" class="text-2xl sm:text-3xl font-black mt-3">مرحباً بك في مسارك الذكي!</h2>
+            <p class="text-white/80 text-sm sm:text-base mt-2 leading-relaxed">يقوم الذكاء الاصطناعي بتحليل اختباراتك بشكل منفصل لتحديد الفجوات ورسم خطة علاجية مخصصة.</p>
+          </div>
+          <div class="absolute left-0 bottom-0 top-0 w-1/3 bg-gradient-to-r from-transparent to-black/10 hidden md:block"></div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div class="bg-white p-6 rounded-2xl border border-slate-100 card-shadow lg:col-span-2">
-            <h3 class="font-extrabold text-slate-900 text-lg mb-4">📈 منحنى كفاءتك المهارية والأكاديمية</h3>
-            <div class="relative h-64">
-              <canvas id="studentPerfChart"></canvas>
-            </div>
-          </div>
-          <div class="bg-white p-6 rounded-2xl border border-slate-100 card-shadow flex flex-col justify-between">
+        <div id="view-courses" class="space-y-6">
+          <div class="flex justify-between items-center mb-4">
             <div>
-              <h3 class="font-extrabold text-slate-900 text-lg mb-3">💡 توصية المساعد الذكي الفورية</h3>
-              <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100 text-sm text-slate-600 leading-relaxed" id="student-ai-rec">
-                يرجى البدء بحل أحد الاختبارات الموقفية المتاحة أعلاه لقيام خوارزميات المنصة برسم وتحليل مستواك بدقة وإعطائك خطة سد الفجوات المهارية.
-              </div>
+              <h3 class="text-xl font-extrabold text-navy-900">المقررات الدراسية الحالية</h3>
+              <p class="text-xs text-slate-500 mt-0.5">اختر المقرر لبدء التقييم الموقفي المستقل واستعراض خطتك العلاجية.</p>
             </div>
-            <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-              <span>آخر تحديث: تلقائي وفوري</span>
-              <span>مبني على آخر 5 جلسات</span>
+          </div>
+          <div id="student-courses-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        </div>
+
+        <div id="view-analysis" class="hidden space-y-6">
+          <h3 class="text-xl font-extrabold text-navy-900">تحليل الأداء والمستوى العام</h3>
+          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm" id="student-performance-content">
+            </div>
+        </div>
+
+        <div id="view-explanations" class="hidden space-y-6">
+          <h3 class="text-xl font-extrabold text-navy-900">قسم الشروحات والتحسين الذاتي</h3>
+          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+            <p class="text-sm text-slate-600 mb-4">بناءً على مقاييس الـ API الذكي، هذه شروحات مقترحة لرفع مستواك في المقررات المتعثر بها:</p>
+            <div id="student-explanations-content" class="space-y-4">
+              </div>
+          </div>
+        </div>
+
+        <div id="exam-section" class="hidden bg-white p-6 sm:p-8 rounded-3xl shadow-xl border border-slate-100 space-y-6">
+          <div class="flex flex-wrap justify-between items-start gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <span class="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-md" id="exam-course-badge">كود المقرر</span>
+              <h3 id="exam-course-title" class="text-xl font-black text-navy-900 mt-2">اسم المقرر المختار للاختبار</h3>
+              <p class="text-xs text-slate-500 mt-1">⚠️ اختبار موقفي ذكي: يقيس مهاراتك عبر محاكاة سيناريوهات عملية حقيقية (5 أسئلة).</p>
+            </div>
+            <button onclick="closeExam()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all">
+              إلغاء الاختبار وتراجع
+            </button>
+          </div>
+
+          <form id="quiz-form" onsubmit="evaluateExam(event)" class="space-y-8">
+            <div id="questions-wrapper" class="space-y-6"></div>
+            <button type="submit" class="w-full sm:w-auto px-8 py-3.5 bg-emerald2-500 hover:bg-emerald2-600 text-white font-extrabold rounded-xl shadow-lg shadow-emerald2-500/20 transition-all text-center">
+              إرسال الإجابات وإنهاء التقييم الحالي ✨
+            </button>
+          </form>
+        </div>
+
+        <div id="result-section" class="hidden bg-white p-6 sm:p-8 rounded-3xl shadow-xl border border-slate-100 space-y-6">
+          <div class="p-6 rounded-2xl text-center max-w-md mx-auto" id="result-score-box"></div>
+          
+          <div class="border-t border-slate-100 pt-6">
+            <h4 class="text-lg font-black text-navy-900 mb-3 flex items-center gap-2">
+              📈 مستواك الحالي بعد الاختبار
+            </h4>
+            <div id="student-level-box" class="p-4 mb-4 rounded-xl text-center font-bold text-lg"></div>
+
+            <h4 class="text-lg font-black text-navy-900 mb-3 flex items-center gap-2">
+              🧠 خطة الـ API المقترحة لتحسين مستواك (AI Remedial Plan)
+            </h4>
+            <div id="ai-improvement-plan-content" class="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-sm leading-relaxed text-slate-700 space-y-3">
             </div>
           </div>
         </div>
       </div>
 
-      <div id="faculty-view" class="hidden space-y-8">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div class="bg-white p-6 rounded-2xl border border-slate-100 card-shadow flex items-center gap-4">
-            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl font-bold">👥</div>
+      <div id="faculty-workspace" class="hidden space-y-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
             <div>
-              <p class="text-xs text-slate-400 font-bold">إجمالي الطلاب المتابعين لديك</p>
-              <p id="fac-stat-count" class="text-2xl font-black text-slate-900">0 طالب</p>
+              <p class="text-xs text-slate-400 font-bold">إجمالي طلاب التخصص</p>
+              <h4 id="stat-total-students" class="text-2xl font-black text-navy-900 mt-1">0</h4>
             </div>
+            <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-500 flex items-center justify-center text-xl font-bold">👥</div>
           </div>
-          <div class="bg-white p-6 rounded-2xl border border-slate-100 card-shadow flex items-center gap-4">
-            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl font-bold">📊</div>
+          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
             <div>
-              <p class="text-xs text-slate-400 font-bold">متوسط المعدل العام للدرجات</p>
-              <p id="fac-stat-avg" class="text-2xl font-black text-slate-900">0%</p>
+              <p class="text-xs text-slate-400 font-bold">متوسط الدرجات العام</p>
+              <h4 id="stat-avg-score" class="text-2xl font-black text-emerald2-600 mt-1">0%</h4>
             </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald2-50 text-emerald2-500 flex items-center justify-center text-xl font-bold">📊</div>
           </div>
-          <div class="bg-white p-6 rounded-2xl border border-slate-100 card-shadow flex items-center gap-4">
-            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl font-bold">⚠️</div>
+          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
             <div>
-              <p class="text-xs text-slate-400 font-bold">الطلاب تحت خطر التعثر</p>
-              <p id="fac-stat-risk" class="text-2xl font-black text-red-600">0 طلاب</p>
+              <p class="text-xs text-slate-400 font-bold">طلاب تحت خطر التعثر</p>
+              <h4 id="stat-at-risk" class="text-2xl font-black text-rose-600 mt-1">0</h4>
             </div>
+            <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center text-xl font-bold">⚠️</div>
+          </div>
+          <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+            <div>
+              <p class="text-xs text-slate-400 font-bold">المقررات النشطة</p>
+              <h4 id="stat-total-courses" class="text-2xl font-black text-gold-600 mt-1">0</h4>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-gold-50 text-gold-500 flex items-center justify-center text-xl font-bold">📚</div>
           </div>
         </div>
 
-        <div id="faculty-upload-section" class="hidden bg-white p-6 rounded-2xl border border-slate-100 card-shadow space-y-4">
+        <div id="faculty-course-management-box" class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
           <div>
-            <h3 class="text-lg font-extrabold text-slate-900">⚡ توليد مقرر ذكي مخصص (خاص بتخصصك المطور)</h3>
-            <p class="text-xs text-slate-500 mt-0.5">بما أنه لا توجد خطط افتراضية مسبقة لتخصصك، ارفع ملف المنهج/المرجع وسيتولى الـ API إنشاء الأسئلة الموقفية والمقرر فوراً.</p>
+            <h3 class="text-lg font-extrabold text-navy-900 flex items-center gap-2">🛠 إدارة وتوسيع مقررات التخصص</h3>
+            <p class="text-xs text-slate-500 mt-0.5">أضف مقرراً ومحتوى معرفياً هنا. سيأخذ الـ API هذا المحتوى كمرجع جديد لتوليد الأسئلة وتحليل مستوى الطالب.</p>
           </div>
-          <div class="flex flex-col sm:flex-row gap-4 items-end">
-            <div class="flex-1 w-full">
-              <label class="block text-xs font-bold text-slate-500 mb-1">اسم المقرر الجديد</label>
-              <input id="new-course-title" type="text" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-sm" placeholder="مثال: هندسة المعالجات الدقيقة، أمن نظم المعلومات..." />
+          <form onsubmit="facultyAddCourse(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">اسم المقرر الجديد</label>
+              <input type="text" id="add-course-title" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500" placeholder="مثال: عمارة الحاسب المتقدمة" />
             </div>
-            <div class="flex-1 w-full">
-              <label class="block text-xs font-bold text-slate-500 mb-1">اختر ملف المرجع (PDF/Docx)</label>
-              <input id="new-course-file" type="file" class="w-full px-2 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-sm text-slate-500" />
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">رمز الكود</label>
+              <input type="text" id="add-course-code" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500 font-mono" placeholder="مثال: CE402" />
             </div>
-            <button onclick="simulateApiCourseGeneration()" type="button" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl shadow hover:bg-blue-700 transition shrink-0">
-              توليد المقرر بالذكاء الاصطناعي
-            </button>
-          </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">المهارات المستهدفة (مفصولة بفواصل)</label>
+              <input type="text" id="add-course-skills" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500" placeholder="مثال: Cache Memory, Pipelines" />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-xs font-bold text-slate-600 mb-1">المادة المعرفية الأساسية (سيستخدمها الـ API لتوليد الأسئلة)</label>
+              <textarea id="add-course-content" required rows="2" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-brand-500" placeholder="اكتب أو الصق هنا محتوى المرجع الأساسي للمقرر..."></textarea>
+            </div>
+            <div class="sm:col-span-3 text-left">
+              <button type="submit" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-sm font-bold shadow-md shadow-brand-500/10 transition-all">
+                ➕ اعتماد ونشر المقرر الجديد
+              </button>
+            </div>
+          </form>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-100 card-shadow overflow-hidden">
-          <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h3 class="text-lg font-extrabold text-slate-900">📋 كشف الطلاب المقيدين ومتابعة الأداء الموقفي</h3>
-              <p class="text-xs text-slate-400 mt-0.5">يتم تصفية وإدراج الطلاب المسجلين في تخصصك تلقائياً هنا مع إمكانية تحديث ورصد درجاتهم.</p>
-            </div>
-            <button onclick="openGradeModal()" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs rounded-xl shadow hover:from-blue-700 hover:to-indigo-700 transition">
-              ➕ رصد درجة جديدة يدوياً
-            </button>
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+          <div>
+            <h3 class="text-lg font-extrabold text-navy-900">📝 لوحة رصد الدرجات المباشرة</h3>
+            <p class="text-xs text-slate-500 mt-0.5">تسجيل نتيجة طالب يدوياً لتحديث قاعدة البيانات وحساب مستواه.</p>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-right text-sm">
-              <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 text-xs uppercase tracking-wider">
-                <tr>
-                  <th class="px-6 py-4">الرقم الجامعي</th>
-                  <th class="px-6 py-4">اسم الطالب</th>
-                  <th class="px-6 py-4">التخصص</th>
-                  <th class="px-6 py-4">المقرر المستهدف</th>
-                  <th class="px-6 py-4">المعدل المكتسب</th>
-                  <th class="px-6 py-4">المستوى المهاري المقدر</th>
-                  <th class="px-6 py-4">حالة الاستحقاق</th>
+          <form onsubmit="facultyRecordGrade(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">الرقم الجامعي للطالب</label>
+              <input type="text" id="grade-student-id" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono" placeholder="الرقم الجامعي..." />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">رمز المقرر</label>
+              <select id="grade-course-code" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">الدرجة المرصودة (من 100)</label>
+              <input type="number" id="grade-score" min="0" max="100" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm" placeholder="مثال: 85" />
+            </div>
+            <div>
+              <button type="submit" class="w-full px-4 py-2 bg-emerald2-500 hover:bg-emerald2-600 text-white rounded-xl text-sm font-bold shadow-md transition-all">
+                💾 رصد وتحديث النتيجة
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+          <div>
+            <h3 class="text-lg font-extrabold text-navy-900">📋 كشف جميع الطلاب المتعثرين وحالتهم</h3>
+            <p class="text-xs text-slate-500 mt-0.5">متابعة دقيقة لجميع طلابك لتحديد من يحتاج لخطة إنقاذ.</p>
+          </div>
+          
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-right border-collapse text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 font-bold">
+                  <th class="p-3 text-xs uppercase">الرقم الجامعي</th>
+                  <th class="p-3 text-xs">اسم الطالب</th>
+                  <th class="p-3 text-xs">المقرر</th>
+                  <th class="p-3 text-xs">آخر درجة</th>
+                  <th class="p-3 text-xs">حالة الطالب</th>
+                  <th class="p-3 text-xs">توصية الـ AI العلاجية</th>
                 </tr>
               </thead>
-              <tbody id="faculty-students-tbody" class="divide-y divide-slate-100 font-medium text-slate-700">
-                </tbody>
+              <tbody id="faculty-roster-rows" class="divide-y divide-slate-100"></tbody>
             </table>
-          </div>
-          <div id="no-students-alert" class="hidden p-8 text-center text-sm text-slate-400">
-            لا يوجد طلاب مسجلين في تخصصك حالياً في قاعدة البيانات التفاعلية.
           </div>
         </div>
       </div>
-
     </main>
   </div>
 
-  <div id="quiz-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
-      <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
-        <div>
-          <h3 id="quiz-modal-title" class="text-lg font-extrabold">جاري تحميل الاختبار الموقفي...</h3>
-          <p id="quiz-modal-subtitle" class="text-xs text-slate-400 mt-0.5">يقيس هذا الاختبار مهارات حل المشكلات الهندسية والعملية</p>
-        </div>
-        <button onclick="closeQuizModal()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-bold text-sm hover:bg-white/20 transition">✕</button>
-      </div>
-      <div id="quiz-modal-content" class="p-6 overflow-y-auto space-y-6 flex-1">
-        </div>
-      <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-        <button onclick="closeQuizModal()" class="px-5 py-2 bg-slate-200 text-slate-700 font-bold text-sm rounded-xl hover:bg-slate-300 transition">إلغاء</button>
-        <button onclick="submitStudentQuiz()" class="px-6 py-2 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition shadow-md">إرسال الإجابات والتحليل</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="grade-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
-      <div class="p-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-        <h3 class="text-lg font-extrabold">رصد وتحديث نتيجة طالب يدوياً</h3>
-        <p class="text-xs text-blue-100 mt-0.5">تحديث قاعدة بيانات التحليل التكيفي للطالب المحدد</p>
-      </div>
-      <form onsubmit="handleRecordGrade(event)" class="p-6 space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">الرقم الجامعي للطالب المستهدف</label>
-          <input id="grade-student-id" type="text" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="مثال: 1" />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">اسم الطالب (سيتم ربطه تلقائياً إذا كان مسجلاً)</label>
-          <input id="grade-student-name" type="text" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="الاسم الكامل للطالب" />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">رمز أو اسم المقرر</label>
-          <select id="grade-course-code" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
-            </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">الدرجة المكتسبة (من 100)</label>
-          <input id="grade-score" type="number" min="0" max="100" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="أدخل الدرجة كقيمة عددية..." />
-        </div>
-        <div class="pt-4 flex justify-end gap-3">
-          <button type="button" onclick="closeGradeModal()" class="px-4 py-2 bg-slate-100 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-200 transition">إلغاء</button>
-          <button type="submit" class="px-5 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl shadow hover:bg-blue-700 transition">رصد وتحديث النتيجة</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-    <div id="ai-chat-box" class="hidden mb-4 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col h-[400px]">
-      <div class="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex justify-between items-center">
+  <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div id="ai-chat-window" class="hidden w-80 sm:w-96 h-[420px] bg-white rounded-3xl shadow-2xl border border-slate-100 flex flex-col overflow-hidden transition-all">
+      <div class="bg-gradient-to-r from-brand-600 to-navy-800 p-4 text-white flex justify-between items-center">
         <div class="flex items-center gap-2">
-          <div class="w-2 h-2 bg-emerald-400 rounded-full animate-ping"></div>
-          <p class="font-extrabold text-sm">مرشد مسار الذكي (Masar Guide AI)</p>
+          <div class="w-2.5 h-2.5 rounded-full bg-emerald2-400 animate-pulse"></div>
+          <div>
+            <h4 class="font-bold text-sm">مستشارك الإرشادي الذكي</h4>
+            <p class="text-[10px] text-brand-200">متصل الآن لمساعدتك</p>
+          </div>
         </div>
-        <button onclick="toggleAiChat()" class="text-white hover:text-slate-200 text-xs">✕</button>
+        <button onclick="toggleAiWidget()" class="text-white/70 hover:text-white text-xs font-bold bg-white/10 px-2 py-1 rounded-md">إغلاق</button>
       </div>
-      <div id="ai-chat-messages" class="p-4 flex-1 overflow-y-auto space-y-3 text-xs leading-relaxed">
-        <div class="bg-slate-100 p-3 rounded-2xl max-w-[85%] text-slate-700">
-          مرحباً بك في منصة مسار الذكية! أنا مرشدك الآلي الذكي هنا لمساعدتك على الإنتقال والتنقل داخل النظام وفهم آلية الاختبارات التكيفية القائمة على المواقف المهنية والتعليمية. كيف يمكنني إرشادك اليوم؟
+      <div id="ai-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs custom-scrollbar bg-slate-50">
+        <div class="bg-brand-50 text-brand-900 p-3 rounded-2xl rounded-tr-none leading-relaxed">
+          مرحباً بك في منصة مسار! أنا مرشدك الأكاديمي الذكي. يمكنك سؤالي عن: أين اختباري، كيف أرى مستواي، ما هو IPv4، كيف أضيف مقرر.. والمزيد!
         </div>
       </div>
-      <div class="p-3 border-t border-slate-100 bg-slate-50 flex gap-2">
-        <input id="ai-chat-input" type="text" placeholder="اكتب سؤالك الإرشادي هنا..." class="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-500" onkeydown="if(event.key==='Enter') sendAiMessage()" />
-        <button onclick="sendAiMessage()" class="px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition">إرسال</button>
+      <div class="p-2 border-t border-slate-100 bg-white flex gap-2">
+        <input type="text" id="ai-chat-input" class="flex-1 px-3 py-2 bg-slate-100 rounded-xl focus:outline-none text-xs" placeholder="اكتب سؤالك هنا..." onkeydown="if(event.key === 'Enter') sendAiChatMessage()" />
+        <button onclick="sendAiChatMessage()" class="px-3 py-2 bg-brand-500 text-white font-bold rounded-xl text-xs shrink-0">إرسال</button>
       </div>
     </div>
 
-    <button onclick="toggleAiChat()" class="pulse-bot w-14 h-14 bg-gradient-to-tr from-blue-600 via-blue-600 to-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center cursor-pointer transform hover:scale-110 transition-transform outline-none focus:ring-4 focus:ring-blue-300">
-      <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <button onclick="toggleAiWidget()" class="w-14 h-14 bg-brand-500 hover:bg-brand-600 active:transform active:scale-90 text-white rounded-full flex items-center justify-center shadow-2xl transition-all border-4 border-white animate-pulse-slow">
+      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
       </svg>
     </button>
   </div>
 
+  <footer class="bg-slate-900 text-slate-500 text-center py-4 text-xs mt-auto border-t border-slate-800">
+    حقوق النشر والملكيات محفوظة لمنصة مسار الذكية لرفع كفاءة الخريجين © 2026
+  </footer>
 
   <script>
-    // --- بنية البيانات وقاعدة البيانات المحلية الوهمية والمستقرة (In-Memory DB initialized from LocalStorage) ---
-    let state = {
-      currentUser: null,
-      users: JSON.parse(localStorage.getItem('masar_users')) || { student: {}, faculty: {} },
-      courses: JSON.parse(localStorage.getItem('masar_courses')) || [
-        { id: 1, title: "شبكات الحاسب المتقدمة", code: "CS301", specialization: "علوم حاسب", skills: ["IPv4/IPv6 Addressing", "Routing Protocols", "Tunneling"], description: "التركيز على بناء البنية التحتية، بروتوكولات التوجيه ونقل الحزم المتقدمة." },
-        { id: 2, title: "بحوث العمليات والتحسين الرياضي", code: "CS302", specialization: "علوم حاسب", skills: ["Linear Programming", "Duality Principle", "Optimization"], description: "بناء النماذج الرياضية المثلى واتخاذ القرارات الإدارية والهندسية لحل الاختناقات." }
-      ],
-      results: JSON.parse(localStorage.getItem('masar_results')) || [
-        { student_id: "10", student_name: "أحمد العسيري", specialization: "علوم حاسب", course_code: "CS301", score: 88, level: "Advanced" },
-        { student_id: "20", student_name: "سارة القحطاني", specialization: "علوم حاسب", course_code: "CS302", score: 55, level: "Beginner" }
-      ]
-    };
+    // --- APP CORE IN-MEMORY STATE ---
+    let currentRole = 'student';
+    let currentUser = null;
 
-    // بنية الأسئلة الموقفية المخصصة (Scenario-based bank) لكل مقرر لفحص الكفاءة الفعلية في مواقف سوق العمل والمهارات المطلوبة
-    const scenarioQuestionsBank = {
-      "CS301": [
-        {
-          q: "بصفتك مهندس شبكات في شركة ناشئة، واجهت مشكلة عدم قدرة الموجهات القديمة (Routers) على دعم حزم IPv6 بشكل مباشر عبر مسار وسيط يدعم فقط بروتوكول IPv4. ما هو الحل الموقفي الأنسب تكنولوجياً لتأمين الاتصال دون استبدال الأجهزة بالكامل؟",
-          options: [
-            "تفعيل تقنية الأنفاق الموجهة (Tunneling) لتغليف حزم IPv6 داخل حمولة حزم IPv4.",
-            "إلغاء حقل Checksum الخاص بالشبكة بشكل كلي لتسريع الاستجابة.",
-            "إجبار جميع الخوادم على العودة الدائمة لاستخدام IPv4 فقط وإيقاف الدعم الهجين."
-          ],
-          correct: 0, skill: "Tunneling"
-        },
-        {
-          q: "تلقيت بلاغاً يفيد بوجود بطء وتأخر حاد في إعادة توجيه مسار البيانات داخل شبكة مؤسسية واسعة النطاق (Intra-AS). أي الاستراتيجيات التالية والمستندة لحالة الوصلة (Link-State) يجب فحصها فوراً لتسريع التقارب؟",
-          options: [
-            "مراجعة ومراقبة أوزان ومقاييس مسارات بروتوكول OSPF المعتمد على خوارزمية دايجسترا.",
-            "الاعتماد على بروتوكول RIP وحساب عدد القفزات فقط كمؤشر أوحد.",
-            "إغلاق جدار الحماية الرئيسي وتعطيل الـ ICMPv6 لتفادي رسائل الخطأ."
-          ],
-          correct: 0, skill: "Routing Protocols"
-        }
-      ],
-      "CS302": [
-        {
-          q: "يريد مصنع محلي بمنطقة عسير تخصيص خطوط إنتاجه لتصنيع منتجين معقدين باستعمال كميات وموارد عمالة ومواد خام محدودة جداً للوصول لأعلى ربح صافي ممكن. ما هو الأسلوب الرياضي الأصح لبناء هذه المسألة وصياغتها؟",
-          options: [
-            "صياغة مسألة برمجة خطية (Linear Programming) وتحديد منطقة الحلول الممكنة والقيود بدقة.",
-            "استخدام بروتوكول التوجيه الشبكي BGP لحساب أقصر مسار للمنتجات المادية.",
-            "تطبيق مبدأ الثنائية العكسية بدون مراجعة الدالة البدائية المستهدفة."
-          ],
-          correct: 0, skill: "Linear Programming"
-        },
-        {
-          q: "إذا قمت بصياغة مسألة تعظيم الأرباح الأكاديمية (Primal Problem) ووجدت أن عدد القيود ضخم جداً ويجعل من الحساب الرياضي أمراً معقداً ومستحيلاً بالموارد الحالية، فما هي الطريقة البديلة المعتمدة للوصول للحل الأمثل بيسر؟",
-          options: [
-            "التحويل الفوري للمسألة المقابلة باستخدام مبدأ الثنائية (Duality Principle) لتسهيل حساب القيود.",
-            "تغيير المتغيرات عشوائياً حتى تتماشى مع دالة الهدف بشكل عشوائي.",
-            "إلغاء القيود كلياً والتركيز فقط على حساب قيمة دالة الربح الصافية المستهدفة."
-          ],
-          correct: 0, skill: "Duality Principle"
-        }
-      ],
-      "DEFAULT": [
-        {
-          q: "عند مواجهتك لمشكلة هندسية أو تنظيمية غير واضحة المعالم في تخصصك المطور المحدث، ما هي الخطوة التحليلية الأفضل لبناء استجابة مواجهة للموقف؟",
-          options: [
-            "تحليل المشكلة لعناصر مهارية مستقلة وبناء نموذج محاكاة أولي للاختبار المستمر وتحديث البيانات.",
-            "تجاهل القيود الثانوية والاعتماد على الحلول التقليدية الجاهزة دون فحص وموائمة بيئية.",
-            "الانتظار حتى حدوث تعثر كلي لإعادة البناء من الصفر التام دون استباقية."
-          ],
-          correct: 0, skill: "Optimization"
-        }
-      ]
-    };
+    let defaultCourses = [
+      {
+        id: "CS301", title: "شبكات الحاسب المتقدمة", code: "CS301", specialization: "علوم حاسب",
+        skills: ["IPv4/IPv6 Addressing", "Routing Protocols", "Tunneling"],
+        content: "بروتوكولات التوجيه الداخلي والخارجي، معمارية العنونة في شبكات الجيل السادس ونفق البيانات."
+      },
+      {
+        id: "CS302", title: "بحوث العمليات والتحسين", code: "CS302", specialization: "علوم حاسب",
+        skills: ["Linear Programming", "Duality Principle", "Optimization"],
+        content: "مبادئ البرمجة الخطية، صياغة القيود الحاكمة لدوال الهدف، ونظرية الثنائية (Duality)."
+      }
+    ];
 
-    let activeQuizCourseCode = "";
-    let currentPerfChartInstance = null;
+    if (!localStorage.getItem('masar_courses')) localStorage.setItem('masar_courses', JSON.stringify(defaultCourses));
+    if (!localStorage.getItem('masar_users')) localStorage.setItem('masar_users', JSON.stringify({}));
+    if (!localStorage.getItem('masar_grades')) localStorage.setItem('masar_grades', JSON.stringify([]));
 
-    // حفظ التحديثات بشكل مستمر في التخزين المحلي للمتصفح
-    function saveToLocalStorage() {
-      localStorage.setItem('masar_users', JSON.stringify(state.users));
-      localStorage.setItem('masar_courses', JSON.stringify(state.courses));
-      localStorage.setItem('masar_results', JSON.stringify(state.results));
+    function getCourses() { return JSON.parse(localStorage.getItem('masar_courses')); }
+    function getUsers() { return JSON.parse(localStorage.getItem('masar_users')); }
+    function getGrades() { return JSON.parse(localStorage.getItem('masar_grades')); }
+    
+    function saveCourses(data) { localStorage.setItem('masar_courses', JSON.stringify(data)); }
+    function saveUsers(data) { localStorage.setItem('masar_users', JSON.stringify(data)); }
+    function saveGrades(data) { localStorage.setItem('masar_grades', JSON.stringify(data)); }
+
+    function setRole(role) {
+      currentRole = role;
+      const btnStudent = document.getElementById('btn-role-student');
+      const btnFaculty = document.getElementById('btn-role-faculty');
+      const lblId = document.getElementById('lbl-user-id');
+      
+      if (role === 'student') {
+        btnStudent.className = "py-3 px-4 rounded-xl border-2 transition-all font-bold flex items-center justify-center gap-2 border-brand-500 bg-brand-50 text-brand-600";
+        btnFaculty.className = "py-3 px-4 rounded-xl border-2 transition-all font-bold flex items-center justify-center gap-2 border-slate-200 text-slate-600 hover:bg-slate-50";
+        lblId.innerText = "الرقم الجامعي";
+      } else {
+        btnFaculty.className = "py-3 px-4 rounded-xl border-2 transition-all font-bold flex items-center justify-center gap-2 border-brand-500 bg-brand-50 text-brand-600";
+        btnStudent.className = "py-3 px-4 rounded-xl border-2 transition-all font-bold flex items-center justify-center gap-2 border-slate-200 text-slate-600 hover:bg-slate-50";
+        lblId.innerText = "الرقم الوظيفي / الأكاديمي";
+      }
     }
 
-    // تبديل ظهور الحقول في تسجيل الدخول
-    function toggleSpecializationField() {
-      // حقل التخصص مطلوب دائماً ومفتوح لكليهما لتحديد كشف عضو هيئة التدريس ومقررات الطلاب بدقة
-    }
-
-    // --- نظام تسجيل الدخول المنفصل والمحمي بالبيانات المسبقة ---
     function handleLogin(e) {
       e.preventDefault();
-      const role = document.getElementById('login-role').value;
-      const id = document.getElementById('login-id').value.trim();
-      const name = document.getElementById('login-name').value.trim();
-      const specialization = document.getElementById('login-specialization').value;
+      const id = document.getElementById('user-id').value.trim();
+      const name = document.getElementById('user-name').value.trim();
+      const spec = document.getElementById('user-spec').value;
 
-      if(!id || !name) return;
+      let users = getUsers();
+      let userKey = currentRole + "_" + id;
 
-      // فحص الحساب وحفظ البيانات بشكل منفصل: لكل من الطالب وعضو هيئة التدريس حساب مستقل حتى لو تطابق الرقم
-      if (!state.users[role][id]) {
-        // إذا كان مستخدماً جديداً، نحفظ بياناته المدخلة
-        state.users[role][id] = { id, name, specialization, role };
-        saveToLocalStorage();
+      if (users[userKey]) {
+        currentUser = users[userKey];
       } else {
-        // إذا كان مستخدماً مسجلاً سابقاً، نقوم بتحديث معلومات الاسم والتخصص الحالية دون خسارة النواتج السابقة
-        state.users[role][id].name = name;
-        state.users[role][id].specialization = specialization;
-        saveToLocalStorage();
+        currentUser = { id: id, name: name, role: currentRole, specialization: spec };
+        users[userKey] = currentUser;
+        saveUsers(users);
       }
 
-      state.currentUser = state.users[role][id];
-      
-      // التوجيه وبناء اللوحات حسب الصلاحية والدور
-      document.getElementById('login-gate').classList.add('hidden');
-      document.getElementById('main-platform').classList.remove('hidden');
-      
-      renderNavbar();
-      if(role === 'student') {
-        initStudentDashboard();
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('app-screen').classList.remove('hidden');
+
+      document.getElementById('nav-user-name').innerText = `مرحباً، ${currentUser.name}`;
+      document.getElementById('nav-user-role').innerText = `الحساب: ${currentUser.role === 'student' ? 'طالب' : 'عضو هيئة تدريس'}`;
+      document.getElementById('nav-spec-badge').innerText = `تخصص: ${currentUser.specialization}`;
+
+      if (currentUser.role === 'student') {
+        document.getElementById('student-workspace').classList.remove('hidden');
+        document.getElementById('faculty-workspace').classList.add('hidden');
+        switchStudentTab('courses');
+        renderStudentDashboard();
       } else {
-        initFacultyDashboard();
+        document.getElementById('faculty-workspace').classList.remove('hidden');
+        document.getElementById('student-workspace').classList.add('hidden');
+        renderFacultyDashboard();
       }
     }
 
-    // تسجيل الخروج الآمن والعودة للبوابة دون مسح قاعدة البيانات التفاعلية المحلية
     function handleLogout() {
-      state.currentUser = null;
-      document.getElementById('main-platform').classList.add('hidden');
-      document.getElementById('login-gate').classList.remove('hidden');
-      document.getElementById('login-id').value = "";
-      document.getElementById('login-name').value = "";
+      currentUser = null;
+      document.getElementById('app-screen').classList.add('hidden');
+      document.getElementById('auth-screen').classList.remove('hidden');
+      document.getElementById('login-form').reset();
+      setRole('student');
     }
 
-    // تحديث الهيدر العلوي المستقر للمنصة
-    function renderNavbar() {
-      const u = state.currentUser;
-      document.getElementById('user-badge').innerText = u.role === 'student' ? 'حساب طالب' : 'هيئة التدريس';
-      document.getElementById('nav-user-name').innerText = u.name;
-      document.getElementById('nav-user-meta').innerText = `الرقم: ${u.id} | تخصص ${u.specialization}`;
+    // --- Student UI Tabs ---
+    function switchStudentTab(tab) {
+      document.getElementById('view-courses').classList.add('hidden');
+      document.getElementById('view-analysis').classList.add('hidden');
+      document.getElementById('view-explanations').classList.add('hidden');
+      
+      document.getElementById('tab-courses').className = "flex-1 py-2 px-4 rounded-xl text-slate-500 hover:bg-slate-50 font-bold text-sm transition-all";
+      document.getElementById('tab-analysis').className = "flex-1 py-2 px-4 rounded-xl text-slate-500 hover:bg-slate-50 font-bold text-sm transition-all";
+      document.getElementById('tab-explanations').className = "flex-1 py-2 px-4 rounded-xl text-slate-500 hover:bg-slate-50 font-bold text-sm transition-all";
+
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).className = "flex-1 py-2 px-4 rounded-xl bg-brand-50 text-brand-600 font-bold text-sm transition-all";
+      
+      if(tab === 'analysis') renderStudentAnalysis();
+      if(tab === 'explanations') renderStudentExplanations();
     }
 
-    // ================= منطق تشغيل حساب الطالب =================
-    function initStudentDashboard() {
-      document.getElementById('faculty-view').classList.add('hidden');
-      document.getElementById('student-view').classList.remove('hidden');
-
-      // حساب وتحليل مستوى الطالب الحالي بناءً على نتائجه المخزنة
-      const myResults = state.results.filter(r => r.student_id === state.currentUser.id);
-      let avg = 0;
-      let level = "مبتدئ (Beginner)";
-      let recText = "يرجى البدء بحل الاختبارات الموقفية المتاحة لمقرراتك لتوليد تقرير الذكاء الاصطناعي التكيفي وسد فجواتك المهارية فوراً.";
-
-      if(myResults.length > 0) {
-        avg = myResults.reduce((acc, curr) => acc + curr.score, 0) / myResults.length;
-        if(avg >= 85) { level = "متقدم (Advanced)"; recText = "مستوى استثنائي وممتاز! يوصي الروبوت بالانتقال فوراً للمشاريع الميدانية والمحاكاة المتقدمة لإدارة البنى التحتية والتكامل الرياضي."; }
-        else if(avg >= 60) { level = "متوسط (Intermediate)"; recText = "أداؤك الموقفي مستقر وجيد. ينصح بالتركيز على مهارة الأنفاق الموجهة ومبدأ الثنائية الرياضية لرفع كفاءتك المهنية."; }
-        else { level = "مبتدئ (Beginner)"; recText = "تم اكتشاف بعض الفجوات الحرجة في أساسيات العنونة أو صياغة القيود الخطية. يرجى مراجعة المراجع المدعمة وإعادة المحاولة في الاختبارات الموقفية لتحسين مستواك."; }
-      }
-      document.getElementById('student-level-lbl').innerText = level;
-      document.getElementById('student-ai-rec').innerText = recText;
-
-      // بناء قائمة المقررات المنفصلة بشكل تفاعلي تام حسب تخصص الطالب
+    // ================= STUDENT SIDE LOGIC =================
+    function renderStudentDashboard() {
       const grid = document.getElementById('student-courses-grid');
       grid.innerHTML = "";
-
-      // جلب المقررات المتوافقة مع تخصص الطالب الحالي (سواء كانت أساسية لعلوم الحاسب أو مولدة تلقائياً بواسطة معلمين في تخصصات أخرى)
-      const myCourses = state.courses.filter(c => c.specialization === state.currentUser.specialization);
-
-      if(myCourses.length === 0) {
-        grid.innerHTML = `<div class="p-6 bg-amber-50 text-amber-700 rounded-xl border border-amber-200 col-span-2 text-center text-sm font-bold">لم يقم أعضاء هيئة التدريس في تخصصك (${state.currentUser.specialization}) برفع أو توليد أي مقرر ذكي مخصص حتى الآن.</div>`;
-      } else {
-        myCourses.forEach(c => {
-          const scoreObj = myResults.find(r => r.course_code === c.code);
-          const currentScoreText = scoreObj ? `الدرجة المكتسبة الحالية: ${scoreObj.score}%` : "لم تجتز الاختبار الموقفي التكيفي بعد";
-          
-          let skillsBadges = c.skills.map(s => `<span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md border border-slate-200 text-xs">${s}</span>`).join(" ");
-
-          grid.innerHTML += `
-            <div class="bg-white p-6 rounded-2xl border border-slate-100 card-shadow flex flex-col justify-between space-y-4">
-              <div>
-                <div class="flex justify-between items-start">
-                  <span class="px-2.5 py-1 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg">${c.code}</span>
-                  <span class="text-xs text-slate-400 font-bold">${currentScoreText}</span>
-                </div>
-                <h3 class="text-lg font-extrabold text-slate-900 mt-2">${c.title}</h3>
-                <p class="text-xs text-slate-500 mt-1 leading-relaxed">${c.description}</p>
-                <div class="mt-3 flex flex-wrap gap-1.5">
-                  ${skillsBadges}
-                </div>
-              </div>
-              <button onclick="openQuizModal('${c.code}')" class="w-full py-2.5 bg-slate-900 hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow transition tracking-wide">
-                🎯 دخول الاختبار الموقفي المنفصل للمقرر
-              </button>
-            </div>
-          `;
-        });
+      
+      const allCourses = getCourses();
+      const studentCourses = allCourses.filter(c => c.specialization === currentUser.specialization);
+      
+      if (studentCourses.length === 0) {
+        grid.innerHTML = `<div class="col-span-full bg-amber-50 border border-amber-200 p-6 rounded-2xl text-center text-amber-800 font-medium">⚠️ لا توجد مقررات معتمدة لتخصصك حالياً.</div>`;
+        return;
       }
 
-      // رسم أو تحديث المنحنى البياني التفاعلي لكفاءة الطالب الحالي
-      initStudentChart(myCourses, myResults);
-    }
-
-    function initStudentChart(myCourses, myResults) {
-      const ctx = document.getElementById('studentPerfChart').getContext('2d');
-      if(currentPerfChartInstance) { currentPerfChartInstance.destroy(); }
-
-      const labels = myCourses.map(c => c.title);
-      const dataValues = myCourses.map(c => {
-        const r = myResults.find(res => res.course_code === c.code);
-        return r ? r.score : 0;
-      });
-
-      currentPerfChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'الدرجة المكتسبة الموقفيّة (%)',
-            data: dataValues,
-            backgroundColor: 'rgba(59, 130, 246, 0.8)',
-            borderColor: 'rgb(37, 99, 235)',
-            borderWidth: 2,
-            borderRadius: 8
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: { min: 0, max: 100, grid: { color: '#f1f5f9' } },
-            x: { grid: { display: false } }
-          },
-          plugins: { legend: { display: false } }
+      const grades = getGrades();
+      studentCourses.forEach(c => {
+        const record = grades.find(g => g.student_id === currentUser.id && g.course_code === c.code);
+        let scoreBadge = `<span class="text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded-md font-bold">لم يتم التقييم بعد</span>`;
+        if (record) {
+          const colorClass = record.score >= 85 ? 'bg-emerald2-100 text-emerald2-800' : (record.score >= 60 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800');
+          scoreBadge = `<span class="text-xs ${colorClass} px-2.5 py-1 rounded-md font-bold">آخر نتيجة: ${record.score}%</span>`;
         }
+
+        const card = document.createElement('div');
+        card.className = "bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4";
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start">
+              <span class="text-xs font-mono font-bold bg-brand-50 text-brand-600 px-2 py-1 rounded-md">${c.code}</span>
+              ${scoreBadge}
+            </div>
+            <h4 class="font-extrabold text-navy-900 text-lg mt-3">${c.title}</h4>
+            <p class="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">${c.content}</p>
+          </div>
+          <div class="pt-2">
+            <button onclick="startExam('${c.code}')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl text-xs shadow-md shadow-brand-500/5 transition-all">
+              بدء الاختبار الموقفي المستقل 💻
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
       });
     }
 
-    // فتح نافذة الاختبار التكيفي القائم على المواقف والسيناريوهات لحل المشكلات
-    function openQuizModal(courseCode) {
-      activeQuizCourseCode = courseCode;
-      const course = state.courses.find(c => c.code === courseCode);
-      if(!course) return;
-
-      document.getElementById('quiz-modal-title').innerText = `الاختبار الموقفي لمقرر: ${course.title}`;
-      document.getElementById('quiz-modal-subtitle').innerText = `تخصص: ${course.specialization} | فحص واختبار مهارات: ${course.skills.join('، ')}`;
+    function renderStudentAnalysis() {
+      const container = document.getElementById('student-performance-content');
+      const grades = getGrades().filter(g => g.student_id === currentUser.id);
+      if(grades.length === 0) {
+        container.innerHTML = `<p class="text-center text-slate-500">لا يوجد بيانات كافية لتحليل مستواك. يرجى أداء الاختبارات أولاً.</p>`;
+        return;
+      }
       
-      const questions = scenarioQuestionsBank[courseCode] || scenarioQuestionsBank["DEFAULT"];
-      const container = document.getElementById('quiz-modal-content');
-      container.innerHTML = "";
-
-      questions.forEach((q, qIdx) => {
-        let optionsHtml = q.options.map((opt, oIdx) => `
-          <label class="flex items-start gap-3 p-3 bg-slate-50 hover:bg-blue-50/50 rounded-xl border border-slate-200 cursor-pointer transition text-xs font-medium text-slate-700">
-            <input type="radio" name="q_${qIdx}" value="${oIdx}" class="mt-0.5 text-blue-600 focus:ring-blue-500" required />
-            <span>${opt}</span>
-          </label>
-        `).join("");
-
-        container.innerHTML += `
-          <div class="space-y-3 p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-            <p class="font-bold text-sm text-slate-900 leading-relaxed"><span class="text-blue-600 font-black">موقف ${qIdx + 1}:</span> ${q.q}</p>
-            <div class="grid grid-cols-1 gap-2 pt-1">
-              ${optionsHtml}
+      let html = `<div class="space-y-4">`;
+      grades.forEach(g => {
+        let status = g.score >= 85 ? 'متقدم (ممتاز)' : (g.score >= 60 ? 'متوسط (يحتاج تطوير)' : 'مبتدئ (متعثر)');
+        let color = g.score >= 85 ? 'text-emerald2-600' : (g.score >= 60 ? 'text-amber-500' : 'text-rose-600');
+        html += `
+          <div class="p-4 border border-slate-100 rounded-xl bg-slate-50 flex justify-between items-center">
+            <div>
+              <p class="font-bold text-navy-900">${g.course_code}</p>
+              <p class="text-xs text-slate-500">حالة المهارة: <span class="font-bold ${color}">${status}</span></p>
             </div>
-            <p class="text-[10px] text-slate-400 font-bold flex items-center gap-1">🎯 المهارة المستهدفة بالقياس: <span class="text-indigo-600">${q.skill}</span></p>
+            <div class="text-xl font-black ${color}">${g.score}%</div>
           </div>
         `;
       });
-
-      document.getElementById('quiz-modal').classList.remove('hidden');
+      html += `</div>`;
+      container.innerHTML = html;
     }
 
-    function closeQuizModal() {
-      document.getElementById('quiz-modal').classList.add('hidden');
-      activeQuizCourseCode = "";
-    }
-
-    // إرسال الإجابات وحساب النتيجة الموقفية وتحديث مستوى الطالب وقاعدة البيانات فوراً بالـ API المحاكي
-    function submitStudentQuiz() {
-      const questions = scenarioQuestionsBank[activeQuizCourseCode] || scenarioQuestionsBank["DEFAULT"];
-      let scoreSum = 0;
-
-      for (let i = 0; i < questions.length; i++) {
-        const selected = document.querySelector(`input[name="q_${i}"]:checked`);
-        if (!selected) {
-          alert("الرجاء الإجابة على جميع المواقف المطروحة للاختبار لضمان دقة التحليل.");
-          return;
-        }
-        if (parseInt(selected.value) === questions[i].correct) {
-          scoreSum += 100;
-        }
-      }
-
-      const finalScore = Math.round(scoreSum / questions.length);
-      let calculatedLevel = "Beginner";
-      if(finalScore >= 85) calculatedLevel = "Advanced";
-      else if(finalScore >= 60) calculatedLevel = "Intermediate";
-
-      // البحث عن نتيجة مسبقة لنفس الطالب والمقرر أو دفع نتيجة جديدة كلياً لحفظها
-      const idx = state.results.findIndex(r => r.student_id === state.currentUser.id && r.course_code === activeQuizCourseCode);
-      if(idx > -1) {
-        state.results[idx].score = finalScore;
-        state.results[idx].level = calculatedLevel;
-      } else {
-        state.results.push({
-          student_id: state.currentUser.id,
-          student_name: state.currentUser.name,
-          specialization: state.currentUser.specialization,
-          course_code: activeQuizCourseCode,
-          score: finalScore,
-          level: calculatedLevel
-        });
-      }
-
-      saveToLocalStorage();
-      closeQuizModal();
-      alert(`تم إرسال إجاباتك بنجاح للـ API المطور وتحديث قاعدة بياناتك التكيفية المهارية! نتيجتك المقدرة في الموقف: ${finalScore}%`);
-      initStudentDashboard(); // تحديث لوحة التحكم فورا برؤية البيانات الجديدة
-    }
-
-
-    // ================= منطق تشغيل حساب عضو هيئة التدريس =================
-    function initFacultyDashboard() {
-      document.getElementById('student-view').classList.add('hidden');
-      document.getElementById('faculty-view').classList.remove('hidden');
-
-      const specialization = state.currentUser.specialization;
-
-      // إظهار أو إخفاء قسم توليد المقررات ورفع المراجع بناءً على التخصص (يظهر فقط إذا كان التخصص ليس علوم حاسب)
-      const uploadSec = document.getElementById('faculty-upload-section');
-      if (specialization !== 'علوم حاسب') {
-        uploadSec.classList.remove('hidden');
-      } else {
-        uploadSec.classList.add('hidden');
-      }
-
-      // تحديث الخيارات المتاحة في القائمة المنسدلة لرصد الدرجات بناءً على المقررات المتاحة لتخصص المعلم الحالي
-      const gradeCourseSelect = document.getElementById('grade-course-code');
-      gradeCourseSelect.innerHTML = "";
-      const currentSpecCourses = state.courses.filter(c => c.specialization === specialization);
-      currentSpecCourses.forEach(c => {
-        gradeCourseSelect.innerHTML += `<option value="${c.code}">${c.code} - ${c.title}</option>`;
-      });
-
-      renderFacultyStudentsTable();
-    }
-
-    // محاكاة الـ API المطور لتوليد المقررات والأسئلة الموقفية بناءً على الملف المرفق بالتخصصات الأخرى
-    function simulateApiCourseGeneration() {
-      const title = document.getElementById('new-course-title').value.trim();
-      const fileInput = document.getElementById('new-course-file');
-
-      if (!title || fileInput.files.length === 0) {
-        alert("يرجى كتابة اسم المقرر واختيار ملف المنهج لتوليد المقرر عبر الـ API المطور.");
+    function renderStudentExplanations() {
+      const container = document.getElementById('student-explanations-content');
+      const grades = getGrades().filter(g => g.student_id === currentUser.id);
+      const courses = getCourses();
+      
+      let needsHelp = grades.filter(g => g.score < 85);
+      if(needsHelp.length === 0) {
+        container.innerHTML = `<div class="p-4 bg-emerald2-50 text-emerald2-700 rounded-xl text-center font-bold">أداؤك ممتاز! لا توجد شروحات علاجية مطلوبة حالياً. استمر على هذا المنوال.</div>`;
         return;
       }
 
-      const randomId = Math.floor(Math.random() * 900) + 100;
-      const generatedCode = `FE-${randomId}`;
-      const userSpec = state.currentUser.specialization;
-
-      // إنشاء الكائن الجديد للمقرر المولد بالذكاء الاصطناعي
-      const newCourse = {
-        id: randomId,
-        title: title,
-        code: generatedCode,
-        specialization: userSpec,
-        skills: ["التحليل الاستباقي", "استكشاف أخطاء الأنظمة المختصة", "معالجة قيود التخصص"],
-        description: `مقرر ذكي تم توليده آلياً بواسطة الـ API المطور بناءً على المرجع المرفق لتخصص ${userSpec}.`
-      };
-
-      // إضافة أسئلة موقفية مخصصة له في بنك الأسئلة المتاح بالمتصفح ديناميكياً لتظهر لطلابه فوراً
-      scenarioQuestionsBank[generatedCode] = [
-        {
-          q: `بصفتك مختصاً في تخصص ${userSpec}، واجهت مشكلة حرجة متعلقة بالبيانات المذكورة في مرجعك المولد. ما هو الإجراء الموقفي والتحليلي السليم لتجنب التعثر الفني وضمان الاستدامة المطلوبة؟`,
-          options: [
-            "تطبيق مهارة التحليل الاستباقي وبناء خطة مرنة للتحقق والمعالجة الآلية.",
-            "إيقاف تشغيل الخوادم والاعتماد الكلي على المعالجة اليدوية التقليدية المباشرة.",
-            "تجاهل البلاغات الفنية والانتظار حتى إصدار التحديث القادم من المطورين الخارجيين."
-          ],
-          correct: 0, skill: "التحليل الاستباقي"
+      let html = '';
+      needsHelp.forEach(g => {
+        const course = courses.find(c => c.code === g.course_code);
+        if(course) {
+          html += `
+            <div class="p-4 border border-brand-100 bg-brand-50/30 rounded-xl">
+              <h5 class="font-bold text-brand-700 text-sm mb-2">📚 مراجعة لمقرر: ${course.title}</h5>
+              <p class="text-xs text-slate-600 leading-relaxed bg-white p-3 rounded-lg border border-slate-100">
+                <span class="font-bold">المادة العلمية المرجعية:</span> ${course.content}
+                <br><br>
+                <span class="text-brand-600 font-bold">💡 نصيحة الـ API:</span> ركز على مراجعة المهارات التالية: (${course.skills.join('، ')}).
+              </p>
+            </div>
+          `;
         }
-      ];
-
-      state.courses.push(newCourse);
-      saveToLocalStorage();
-      
-      alert(`تم بنجاح وبشكل فوري استدعاء الـ API وتوليد المقرر ${title} برمز (${generatedCode}) وحفظ أسئلته الموقفية بنجاح لطلاب تخصصك!`);
-      document.getElementById('new-course-title').value = "";
-      document.getElementById('new-course-file').value = null;
-
-      initFacultyDashboard();
+      });
+      container.innerHTML = html;
     }
 
-    // بناء وتعبئة كشف وعرض الطلاب ومستوياتهم وإحصائيات المعلم تفاعلياً
-    function renderFacultyStudentsTable() {
-      const spec = state.currentUser.specialization;
+    let activeExamCourseCode = null;
+    let currentGeneratedQuestions = [];
+
+    function startExam(courseCode) {
+      const courses = getCourses();
+      const course = courses.find(c => c.code === courseCode);
+      if (!course) return;
+
+      activeExamCourseCode = courseCode;
+      document.getElementById('exam-course-badge').innerText = course.code;
+      document.getElementById('exam-course-title').innerText = course.title;
+
+      document.getElementById('result-section').classList.add('hidden');
+      document.getElementById('view-courses').classList.add('hidden');
+      document.getElementById('exam-section').classList.remove('hidden');
+
+      currentGeneratedQuestions = generateSituationalQuestions(course);
       
-      // التصفية والربط التلقائي: أي طالب يتطابق تخصصه مع تخصص المعلم يظهر له في هذا الكشف فوراً
-      // سنقوم بجلب قائمة الطلاب المسجلين في هذا التخصص عبر مسح مستخدمي دور "طالب" المقيدين بقاعدة البيانات
-      const allStudentsInSpec = Object.values(state.users.student).filter(s => s.specialization === spec);
-      
-      // نتحقق أيضاً من وجود نتائج لطلاب مسجلين سابقاً لربطهم في الكشف
-      const resultsInSpec = state.results.filter(r => r.specialization === spec);
+      const wrapper = document.getElementById('questions-wrapper');
+      wrapper.innerHTML = "";
 
-      const tbody = document.getElementById('faculty-students-tbody');
-      tbody.innerHTML = "";
+      currentGeneratedQuestions.forEach((q, idx) => {
+        const qDiv = document.createElement('div');
+        qDiv.className = "bg-slate-50/50 border border-slate-200 p-5 rounded-2xl space-y-3";
+        qDiv.innerHTML = `
+          <p class="font-bold text-slate-900 text-sm leading-relaxed"><span class="text-brand-500">سؤال ${idx+1}:</span> ${q.scenario}</p>
+          <div class="grid grid-cols-1 gap-2 pl-4">
+            ${q.options.map((opt, optIdx) => `
+              <label class="flex items-start gap-2.5 p-2.5 bg-white rounded-xl border border-slate-100 hover:border-brand-300 cursor-pointer text-xs transition-all">
+                <input type="radio" name="q-${idx}" value="${optIdx}" required class="mt-0.5 text-brand-600 focus:ring-brand-500" />
+                <span class="text-slate-700 font-medium">${opt}</span>
+              </label>
+            `).join('')}
+          </div>
+        `;
+        wrapper.appendChild(qDiv);
+      });
 
-      // تجميع لبيانات العرض الشاملة
-      let displayList = [];
+      document.getElementById('exam-section').scrollIntoView({ behavior: 'smooth' });
+    }
 
-      // إدراج الطلاب المسجلين رسمياً أولاً
-      allStudentsInSpec.forEach(st => {
-        const studentResults = resultsInSpec.filter(r => r.student_id === st.id);
-        if(studentResults.length > 0) {
-          studentResults.forEach(r => {
-            displayList.push({ id: st.id, name: st.name, specialization: st.specialization, course_code: r.course_code, score: r.score, level: r.level });
+    function closeExam() {
+      document.getElementById('exam-section').classList.add('hidden');
+      document.getElementById('view-courses').classList.remove('hidden');
+    }
+
+    function generateSituationalQuestions(course) {
+      const questions = [];
+      // API الوهمي يقرأ الـ content الخاص بالمقرر المضاف لتوليد الأسئلة
+      const isCustom = !["CS301", "CS302"].includes(course.code);
+
+      for (let i = 0; i < 5; i++) {
+        if(isCustom) {
+           questions.push({
+            scenario: `بناءً على محتوى المقرر (${course.title}): كيف تقوم بتطبيق المهارة المذكورة في سياق عملي؟ [مولد عبر الـ API من المادة المرفقة]`,
+            options: [
+              "استخدام الأساليب المذكورة في المرجع الأساسي للمقرر.",
+              "تجاهل القيود البرمجية وبناء نظام من الصفر.",
+              "الاعتماد على بروتوكولات قديمة غير مدعومة.",
+              "لا شيء مما سبق."
+            ],
+            correct: 0
+          });
+        } else if (course.code === 'CS301') {
+           questions.push({
+            scenario: `بصفتك مهندس شبكات، حدثت مشكلة في التوجيه لـ IPv6. ما هو الإجراء الأصح؟`,
+            options: ["التحقق من إعدادات النفق (Tunneling).", "العودة لـ IPv4.", "تعطيل الجدار الناري.", "تغيير الكابلات."],
+            correct: 0
           });
         } else {
-          // طالب مسجل ولكن ليس لديه درجات مرصودة بعد
-          displayList.push({ id: st.id, name: st.name, specialization: st.specialization, course_code: "لا يوجد حالياً", score: 0, level: "مبتدئ (Beginner)" });
+           questions.push({
+            scenario: `في بحوث العمليات، أردت تقليل التكلفة لمنتجك، ماذا تستخدم؟`,
+            options: ["مبادئ البرمجة الخطية (Linear Programming).", "زيادة الإنتاج عشوائياً.", "تسريح العمالة.", "تجاهل التكلفة."],
+            correct: 0
+          });
         }
-      });
-
-      // إدراج أي نتائج مرصودة تاريخياً لطلاب بنفس التخصص ولم يسجلوا حسابهم النشط في الجلسة الحالية بعد
-      resultsInSpec.forEach(r => {
-        const alreadyAdded = displayList.some(d => d.id === r.student_id && d.course_code === r.course_code);
-        if(!alreadyAdded) {
-          displayList.push({ id: r.student_id, name: r.student_name, specialization: r.specialization, course_code: r.course_code, score: r.score, level: r.level });
-        }
-      });
-
-      if (displayList.length === 0) {
-        document.getElementById('no-students-alert').classList.remove('hidden');
-        updateFacultyStats(0, 0, 0);
-        return;
-      } else {
-        document.getElementById('no-students-alert').classList.add('hidden');
       }
+      return questions;
+    }
 
-      let totalScore = 0;
-      let riskCount = 0;
-
-      displayList.forEach(item => {
-        totalScore += item.score;
-        let isRisk = item.score < 60;
-        if(isRisk && item.course_code !== "لا يوجد حالياً") riskCount++;
-
-        let badgeColor = "bg-slate-100 text-slate-600";
-        if(item.level === "Advanced" || item.level.includes("متقدم")) badgeColor = "bg-emerald-50 text-emerald-700 border border-emerald-200";
-        else if(item.level === "Intermediate" || item.level.includes("متوسط")) badgeColor = "bg-blue-50 text-blue-700 border border-blue-200";
-        else badgeColor = "bg-red-50 text-red-700 border border-red-200";
-
-        let riskStatusBadge = item.score >= 60 || item.course_code === "لا يوجد حالياً" 
-          ? `<span class="inline-flex items-center gap-1 text-emerald-600 font-bold text-xs">● مستقر</span>`
-          : `<span class="inline-flex items-center gap-1 text-red-600 font-bold text-xs animate-pulse">● معرض للتعثر</span>`;
-
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-50/80 transition">
-            <td class="px-6 py-4 font-bold text-slate-900">${item.id}</td>
-            <td class="px-6 py-4">${item.name}</td>
-            <td class="px-6 py-4 text-xs text-slate-400">${item.specialization}</td>
-            <td class="px-6 py-4"><span class="px-2 py-0.5 bg-slate-100 rounded text-xs font-mono font-bold">${item.course_code}</span></td>
-            <td class="px-6 py-4 font-black text-blue-600 text-base">${item.score}%</td>
-            <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-lg text-xs font-bold ${badgeColor}">${item.level}</span></td>
-            <td class="px-6 py-4">${riskStatusBadge}</td>
-          </tr>
-        `;
+    function evaluateExam(e) {
+      e.preventDefault();
+      let score = 0;
+      currentGeneratedQuestions.forEach((q, idx) => {
+        const selected = document.querySelector(`input[name="q-${idx}"]:checked`).value;
+        if (parseInt(selected) === q.correct) score += 20;
       });
 
-      const avgScore = Math.round(totalScore / displayList.length);
-      updateFacultyStats(allStudentsInSpec.length || displayList.length, avgScore, riskCount);
+      let grades = getGrades();
+      let existingIndex = grades.findIndex(g => g.student_id === currentUser.id && g.course_code === activeExamCourseCode);
+      
+      const record = { student_id: currentUser.id, course_code: activeExamCourseCode, score: score, date: new Date().toISOString() };
+      if (existingIndex > -1) grades[existingIndex] = record;
+      else grades.push(record);
+      saveGrades(grades);
+
+      document.getElementById('exam-section').classList.add('hidden');
+      document.getElementById('result-section').classList.remove('hidden');
+
+      const scoreBox = document.getElementById('result-score-box');
+      const levelBox = document.getElementById('student-level-box');
+      const planBox = document.getElementById('ai-improvement-plan-content');
+
+      let colorClass = score >= 85 ? 'bg-emerald2-50 text-emerald2-700 border-emerald2-200' : (score >= 60 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-700 border-rose-200');
+      
+      scoreBox.className = `p-6 rounded-2xl text-center max-w-md mx-auto border ${colorClass}`;
+      scoreBox.innerHTML = `
+        <h3 class="text-4xl font-black mb-2">${score}%</h3>
+        <p class="text-sm font-bold opacity-80">تم حفظ نتيجة التقييم في مسارك الأكاديمي</p>
+      `;
+
+      let levelText = score >= 85 ? '🌟 مستوى متقدم (جاهز لسوق العمل)' : (score >= 60 ? '📊 مستوى متوسط (يحتاج لبعض المراجعة)' : '⚠️ مستوى مبتدئ (متعثر - يتطلب تدخلاً عاجلاً)');
+      levelBox.className = `p-4 mb-4 rounded-xl text-center font-bold text-lg ${score >= 85 ? 'bg-emerald2-100 text-emerald2-800' : (score >= 60 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800')}`;
+      levelBox.innerText = levelText;
+
+      let planText = "";
+      if (score >= 85) planText = "أداؤك متميز! يقترح الـ API البدء في مشاريع عملية معقدة أو الحصول على شهادات احترافية.";
+      else if (score >= 60) planText = "يوجد فهم جيد للأساسيات، ولكن الـ API يوصي بمراجعة الشروحات المتاحة في القائمة العلوية لتثبيت المهارات.";
+      else planText = "تنبيه من الـ API: يوجد فجوة معرفية واضحة في المفاهيم الأساسية. تم إشعار عضو هيئة التدريس، ونوصي بمراجعة المادة المعرفية في 'قسم الشروحات' فوراً.";
+
+      planBox.innerHTML = `<strong>توصية النظام:</strong> ${planText}`;
+      
+      renderStudentDashboard(); 
     }
 
-    function updateFacultyStats(count, avg, risk) {
-      document.getElementById('fac-stat-count').innerText = `${count} طالب`;
-      document.getElementById('fac-stat-avg').innerText = `${avg}%`;
-      document.getElementById('fac-stat-risk').innerText = `${risk} طلاب`;
+    // ================= FACULTY SIDE LOGIC =================
+    function renderFacultyDashboard() {
+      const users = getUsers();
+      const grades = getGrades();
+      const courses = getCourses().filter(c => c.specialization === currentUser.specialization);
+      
+      const facultyStudents = Object.values(users).filter(u => u.role === 'student' && u.specialization === currentUser.specialization);
+      
+      document.getElementById('stat-total-students').innerText = facultyStudents.length;
+      document.getElementById('stat-total-courses').innerText = courses.length;
+
+      let totalScore = 0; let gradeCount = 0; let atRiskCount = 0;
+      
+      const tbody = document.getElementById('faculty-roster-rows');
+      tbody.innerHTML = "";
+
+      facultyStudents.forEach(student => {
+        courses.forEach(course => {
+          const record = grades.find(g => g.student_id === student.id && g.course_code === course.code);
+          if (record) {
+            totalScore += record.score;
+            gradeCount++;
+            if(record.score < 60) atRiskCount++;
+
+            let status = record.score >= 85 ? 'متفوق' : (record.score >= 60 ? 'طبيعي' : 'متعثر');
+            let color = record.score >= 85 ? 'text-emerald2-600' : (record.score >= 60 ? 'text-amber-500' : 'text-rose-600');
+            let recommendation = record.score < 60 ? 'إلزام الطالب بمراجعة الشروحات' : 'متابعة عادية';
+
+            tbody.innerHTML += `
+              <tr class="hover:bg-slate-50 transition-all">
+                <td class="p-3 font-mono text-slate-500">${student.id}</td>
+                <td class="p-3 font-bold text-navy-900">${student.name}</td>
+                <td class="p-3 text-brand-600 font-bold">${course.code}</td>
+                <td class="p-3 font-black ${color}">${record.score}%</td>
+                <td class="p-3 font-bold ${color}">${status}</td>
+                <td class="p-3 text-slate-500">${recommendation}</td>
+              </tr>
+            `;
+          } else {
+             tbody.innerHTML += `
+              <tr class="hover:bg-slate-50 transition-all opacity-60">
+                <td class="p-3 font-mono text-slate-500">${student.id}</td>
+                <td class="p-3 font-bold text-navy-900">${student.name}</td>
+                <td class="p-3 text-brand-600 font-bold">${course.code}</td>
+                <td class="p-3">-</td>
+                <td class="p-3">لم يختبر</td>
+                <td class="p-3">-</td>
+              </tr>
+            `;
+          }
+        });
+      });
+
+      document.getElementById('stat-avg-score').innerText = gradeCount > 0 ? Math.round(totalScore / gradeCount) + '%' : '0%';
+      document.getElementById('stat-at-risk').innerText = atRiskCount;
+
+      const gradeCourseSelect = document.getElementById('grade-course-code');
+      gradeCourseSelect.innerHTML = courses.map(c => `<option value="${c.code}">${c.code} - ${c.title}</option>`).join('');
     }
 
-    function openGradeModal() {
-      document.getElementById('grade-modal').classList.remove('hidden');
-    }
-    function closeGradeModal() {
-      document.getElementById('grade-modal').classList.add('hidden');
-    }
-
-    // رصد الدرجات يدوياً وحفظها في الحساب التبادلي للطالب
-    function handleRecordGrade(e) {
+    function facultyAddCourse(e) {
       e.preventDefault();
-      const sId = document.getElementById('grade-student-id').value.trim();
-      const sName = document.getElementById('grade-student-name').value.trim();
+      const title = document.getElementById('add-course-title').value;
+      const code = document.getElementById('add-course-code').value;
+      const skills = document.getElementById('add-course-skills').value.split(',').map(s => s.trim());
+      const content = document.getElementById('add-course-content').value;
+
+      let courses = getCourses();
+      courses.push({ id: code, title: title, code: code, specialization: currentUser.specialization, skills: skills, content: content });
+      saveCourses(courses);
+
+      alert('تمت إضافة المقرر بنجاح! سيقوم الـ API الآن باستخدامه كمرجع لتوليد الأسئلة للطلاب.');
+      e.target.reset();
+      renderFacultyDashboard();
+    }
+
+    function facultyRecordGrade(e) {
+      e.preventDefault();
+      const sId = document.getElementById('grade-student-id').value;
       const cCode = document.getElementById('grade-course-code').value;
       const score = parseInt(document.getElementById('grade-score').value);
 
-      if(!sId || !sName || !cCode || isNaN(score)) return;
-
-      let calcLevel = "Beginner";
-      if(score >= 85) calcLevel = "Advanced";
-      else if(score >= 60) calcLevel = "Intermediate";
-
-      // إذا كان الطالب غير مسجل في جدول الطلاب النشطين، ننشئ له سجلاً تلقائياً لحفظ بياناته في التخصص الحالي
-      if(!state.users.student[sId]) {
-        state.users.student[sId] = { id: sId, name: sName, specialization: state.currentUser.specialization, role: 'student' };
-      }
-
-      const idx = state.results.findIndex(r => r.student_id === sId && r.course_code === cCode);
-      if(idx > -1) {
-        state.results[idx].score = score;
-        state.results[idx].level = calcLevel;
-        state.results[idx].student_name = sName;
-      } else {
-        state.results.push({
-          student_id: sId,
-          student_name: sName,
-          specialization: state.currentUser.specialization,
-          course_code: cCode,
-          score: score,
-          level: calcLevel
-        });
-      }
-
-      saveToLocalStorage();
-      closeGradeModal();
-      alert(`تم بنجاح رصد وتحديث درجة الطالب ${sName} في المقرر ${cCode}`);
+      let grades = getGrades();
+      let existingIndex = grades.findIndex(g => g.student_id === sId && g.course_code === cCode);
       
-      // تفريغ المدخلات
-      document.getElementById('grade-student-id').value = "";
-      document.getElementById('grade-student-name').value = "";
-      document.getElementById('grade-score').value = "";
+      const record = { student_id: sId, course_code: cCode, score: score, date: new Date().toISOString() };
+      if (existingIndex > -1) grades[existingIndex] = record;
+      else grades.push(record);
+      saveGrades(grades);
 
-      initFacultyDashboard();
+      alert('تم رصد الدرجة بنجاح!');
+      e.target.reset();
+      renderFacultyDashboard();
     }
 
-
-    // ================= منطق تشغيل البوت الإرشادي العائم =================
-    function toggleAiChat() {
-      const box = document.getElementById('ai-chat-box');
-      box.classList.toggle('hidden');
+    // ================= AI CHATBOT LOGIC =================
+    function toggleAiWidget() {
+      const w = document.getElementById('ai-chat-window');
+      w.classList.toggle('hidden');
     }
 
-    function sendAiMessage() {
+    function sendAiChatMessage() {
       const input = document.getElementById('ai-chat-input');
       const text = input.value.trim();
-      if(!text) return;
+      if (!text) return;
 
-      const container = document.getElementById('ai-chat-messages');
+      const msgs = document.getElementById('ai-chat-messages');
       
-      // إضافة رسالة المستخدم الواجهة
-      container.innerHTML += `<div class="bg-blue-600 text-white p-3 rounded-2xl max-w-[85%] self-end mr-auto text-left">${text}</div>`;
-      input.value = "";
-
-      // رد البوت الإرشادي التلقائي التفاعلي الموائم لموقع ومستندات المنصة
+      msgs.innerHTML += `
+        <div class="bg-slate-200 text-slate-800 p-3 rounded-2xl rounded-tl-none self-end ml-8 mb-3">
+          ${text}
+        </div>
+      `;
+      input.value = '';
+      
       setTimeout(() => {
-        let reply = "بصفتي مرشداً آلياً، أود إبلاغك بأن منصة مسار تفصل بالكامل بين حسابات ومزايا الطلاب والمعلمين. يمكنك الانتقال لحل الاختبارات الموقفية الفردية المنفصلة لكل مقرر، أو مراجعة كشوف رصد وتحليلات الدرجات الاستباقية الفورية وسد فجوات العمل.";
-        if(text.includes("اختبار") || text.includes("اسئلة") || text.includes("الموقف")) {
-          reply = "الاختبارات هنا مبنية بالكامل على المواقف العملية والسيناريوهات الميدانية؛ ستضعك في مواجهة تحديات حقيقية لتقييم المهارات وسد الثغرات المهارية بدقة، واجتيازها يرفع مستواك المهني مقترناً بذكاء الخوارزميات.";
-        } else if (text.includes("تخصص") || text.includes("هندسة") || text.includes("مقرر")) {
-          reply = "المنصة تدعم علوم الحاسب بمقررات افتراضية كقياس الشبكات وبحوث العمليات، وتسمح لأعضاء هيئة التدريس في التخصصات المحدثة الأخرى بتوليد مقررات مخصصة فوراً عبر الـ API بمجرد رفع ملفات المناهج الخاصة بهم.";
-        }
-        container.innerHTML += `<div class="bg-slate-100 p-3 rounded-2xl max-w-[85%] text-slate-700">${reply}</div>`;
-        container.scrollTop = container.scrollHeight;
+        let reply = getBotReply(text);
+        msgs.innerHTML += `
+          <div class="bg-brand-50 text-brand-900 p-3 rounded-2xl rounded-tr-none mr-8 mb-3 leading-relaxed border border-brand-100">
+            ${reply}
+          </div>
+        `;
+        msgs.scrollTop = msgs.scrollHeight;
       }, 600);
+    }
+
+    function getBotReply(text) {
+      const q = text.toLowerCase();
+      // خريطة إجابات البوت بناءً على أسئلتك المرفقة
+      if(q.includes('أين') && q.includes('اختباري')) return 'يمكنك إيجاد اختباراتك في لوحة التحكم تحت قسم "مقرراتي واختباراتي". اختر المقرر واضغط على بدء الاختبار الموقفي.';
+      if(q.includes('أين') && q.includes('تحليلي')) return 'تجد تحليلك المفصل في قسم "تحليل أدائي ومستواي" الموجود في القائمة العلوية داخل مساحة العمل الخاصة بك.';
+      if(q.includes('مهاراتي المكتسبة')) return 'تظهر مهاراتك المكتسبة في تفاصيل كل مقرر، وكذلك في الخطة العلاجية التي يقترحها الـ API بعد كل اختبار.';
+      if(q.includes('نسبة انجازي في شبكات')) return 'يعتمد ذلك على درجاتك الأخيرة في مقرر الشبكات (CS301). توجه لقسم "تحليل الأداء" لرؤية نسبتك بدقة.';
+      if(q.includes('نسبة انجازي في بحوث')) return 'تجد نسبة إنجازك في بحوث العمليات (CS302) في قسم "تحليل الأداء" في لوحة تحكم الطالب.';
+      if(q.includes('متابعة درجات طلابي')) return 'بصفتك عضو هيئة تدريس، توجه إلى قسم "كشف جميع الطلاب المتعثرين وحالتهم" في أسفل لوحة التحكم الخاصة بك لرؤية جميع الدرجات.';
+      if(q.includes('أرصد درجات')) return 'يمكنك رصد الدرجات يدوياً من خلال قسم "لوحة رصد الدرجات المباشرة" في لوحة تحكم عضو هيئة التدريس.';
+      if(q.includes('أضيف مقرر')) return 'يمكنك إضافة مقرر وارفاق مادته العلمية ليقرأها الـ API من خلال قسم "إدارة وتوسيع مقررات التخصص" في لوحتك.';
+      if(q.includes('كم طالب يوجد لدي')) return 'يظهر إجمالي عدد الطلاب المسجلين في تخصصك في أعلى لوحة تحكم عضو هيئة التدريس في بطاقة الإحصائيات.';
+      if(q.includes('كم مقرر أدرسه للطلابي') || q.includes('كم مقرر أدرسه انا')) return 'تظهر أعداد المقررات في بطاقة "المقررات النشطة" أعلى لوحة التحكم.';
+      if(q.includes('كيف اسجل دخول')) return 'أنت مسجل الدخول بالفعل! ولكن عموماً، يتم تسجيل الدخول من الشاشة الرئيسية بإدخال الرقم الجامعي أو الوظيفي وتحديد صفتك.';
+      if(q.includes('اختبار لم أختبره')) return 'أي مقرر في قسم "مقرراتي" يحمل شارة الرصاصية "لم يتم التقييم بعد" هو اختبار متاح لم تقم بأدائه بعد.';
+      if(q.includes('كيف هو مستواي')) return 'بناءً على نتائجك، يتم تحديد مستواك (مبتدئ، متوسط، أو متقدم). اطلع على "تحليل أدائي" لمعرفة التفاصيل.';
+      if(q.includes('ipv4')) return 'هو الإصدار الرابع من بروتوكول الإنترنت (Internet Protocol version 4). يستخدم عناوين بطول 32 بت، وهو البروتوكول الأساسي الذي بنيت عليه شبكة الإنترنت.';
+      if(q.includes('ipv6')) return 'هو الإصدار السادس من بروتوكول الإنترنت، صمم لحل مشكلة استنفاد عناوين IPv4، ويستخدم عناوين بطول 128 بت مما يوفر عدداً هائلاً من العناوين.';
+      if(q.includes('network') || q.includes('الشبكة')) return 'الشبكة (Network) هي مجموعة من الأجهزة المتصلة ببعضها البعض (سلكياً أو لاسلكياً) بهدف تبادل البيانات والموارد المشتركة.';
+      if(q.includes('البحوث') || q.includes('بحوث العمليات')) return 'بحوث العمليات (Operations Research) هو فرع من الرياضيات التطبيقية يعنى باستخدام النماذج الرياضية والإحصائية لتحسين عمليات اتخاذ القرار وتخصيص الموارد بكفاءة.';
+      if(q.includes('dule') || q.includes('duality') || q.includes('الثنائية')) return 'نظرية الثنائية (Duality) في البرمجة الخطية تعني أن لكل مشكلة رياضية (أولية) مشكلة مرتبطة بها (ثنائية)، وحل إحداهما يوفر معلومات عن حل الأخرى، وتستخدم بكثرة في تحسين التكاليف.';
+      
+      return 'سؤال رائع! لضمان دقة الإجابة، يرجى التوجه لـ "قسم الشروحات" حيث يضع الـ API المادة المعرفية لكل مقرر لتستفيد منها بشكل مباشر.';
     }
   </script>
 </body>
